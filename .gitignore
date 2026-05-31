@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.DS_Store
+# never commit test/eval material or generated interview portfolios into the distributed skill
+evals/
+*-workspace/
+demo-portfolio/
+mock-interviews/

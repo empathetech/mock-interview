@@ -1,0 +1,312 @@
+/* Mock Interview shared shell — design system.
+   Tokens adapted from Empathetech's brand (empathetech.org/src/styles/variables.css): Poppins type,
+   the purple/aqua/coral palette, the 3px spacing scale, 9px "semi-rounded" radius, 0.2s transitions.
+   Light + dark themes via [data-theme] — EVERY surface flips, including the code editor (light editor in light
+   mode, dark in dark), driven by the --editor-*/--syn-* tokens defined per theme below.
+   Contrast targets WCAG AA; focus, reduced-motion, and text-scaling are first-class (this is Empathetech). */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  /* Empathetech brand palette (raw) */
+  --ee-dark-blue: #302653; --ee-aqua: #2a9d8f; --ee-yellow: #ffac32; --ee-sunset: #e76f51;
+  --ee-barbie: #ff3186; --ee-bright-purple: #9973d3; --ee-deep-purple: #642d9b;
+
+  /* spacing scale (3px base, per the brand) */
+  --s-xxs: 3px; --s-xs: 9px; --s-s: 18px; --s-m: 30px; --s-l: 45px;
+  --radius: 9px; --radius-lg: 16px; --radius-pill: 999px;
+  --transition: .2s ease;
+
+  --sans: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+/* Editor + console surfaces and syntax colors are THEME-AWARE (light editor in light mode, dark in dark) —
+   defined in each theme block below so every pad flips with the toggle. */
+
+/* ---- LIGHT theme (default) ---- */
+:root, :root[data-theme="light"] {
+  --bg: #f5f3fb; --panel: #ffffff; --panel-2: #efeaf8;
+  --ink: #271f3f; --muted: #645b7d; --line: #e4def2;
+  --accent: #642d9b; --accent-hover: #51247e; --accent-ink: #ffffff; --accent-soft: #ede7f7;
+  --link: #5a2d8f;
+  --success: #1c8576; --success-bg: #2a9d8f; --warn: #8a5a10; --danger: #b9442a;
+  --focus: #9973d3;
+  --shadow: 0 1px 2px rgba(48,38,83,.06), 0 4px 16px rgba(48,38,83,.06);
+  /* light editor surfaces + dark-on-light syntax palette */
+  --editor-bg: #fcfbff; --editor-ink: #2a2342; --editor-gutter: #f1edf8; --editor-lineno: #a99fc4;
+  --toolbar-bg: #efeaf8; --toolbar-ink: #3a3357; --console-bg: #f7f5fc; --console-ink: #2f2950;
+  --syn-comment: #6c6680; --syn-keyword: #7c3aed; --syn-string: #157f52; --syn-number: #b4541b;
+  --syn-def: #1d4ed8; --syn-builtin: #9a6a12; --syn-operator: #0e7490; --syn-property: #1e6fb8;
+  --syn-tag: #b3261e; --syn-meta: #645b7d; --syn-cursor: #271f3f;
+}
+/* ---- DARK theme ---- */
+:root[data-theme="dark"] {
+  --bg: #17141f; --panel: #201b2e; --panel-2: #2a2340;
+  --ink: #ece9f6; --muted: #a99fc4; --line: #342d49;
+  --accent: #b59af0; --accent-hover: #c6b0f7; --accent-ink: #1b1626; --accent-soft: #2a2440;
+  --link: #c3a9f5;
+  --success: #5cc7b6; --success-bg: #2a9d8f; --warn: #ffc36b; --danger: #f0937c;
+  --focus: #b59af0;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+  /* dark editor surfaces + light-on-dark syntax palette */
+  --editor-bg: #1c1830; --editor-ink: #ece9f6; --editor-gutter: #16121f; --editor-lineno: #6c6390;
+  --toolbar-bg: #251f3a; --toolbar-ink: #d9d3ea; --console-bg: #15111f; --console-ink: #cfc9e0;
+  --syn-comment: #9991b5; --syn-keyword: #c792ea; --syn-string: #88d999; --syn-number: #f7926c;
+  --syn-def: #82aaff; --syn-builtin: #ffcb6b; --syn-operator: #89ddff; --syn-property: #aad4ff;
+  --syn-tag: #f07178; --syn-meta: #b3acc9; --syn-cursor: #ece9f6;
+}
+/* honor OS preference when the user hasn't chosen explicitly */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #17141f; --panel: #201b2e; --panel-2: #2a2340;
+    --ink: #ece9f6; --muted: #a99fc4; --line: #342d49;
+    --accent: #b59af0; --accent-hover: #c6b0f7; --accent-ink: #1b1626; --accent-soft: #2a2440;
+    --link: #c3a9f5; --success: #5cc7b6; --success-bg: #2a9d8f; --warn: #ffc36b; --danger: #f0937c;
+    --focus: #b59af0; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+    --editor-bg: #1c1830; --editor-ink: #ece9f6; --editor-gutter: #16121f; --editor-lineno: #6c6390;
+    --toolbar-bg: #251f3a; --toolbar-ink: #d9d3ea; --console-bg: #15111f; --console-ink: #cfc9e0;
+    --syn-comment: #9991b5; --syn-keyword: #c792ea; --syn-string: #88d999; --syn-number: #f7926c;
+    --syn-def: #82aaff; --syn-builtin: #ffcb6b; --syn-operator: #89ddff; --syn-property: #aad4ff;
+    --syn-tag: #f07178; --syn-meta: #b3acc9; --syn-cursor: #ece9f6;
+  }
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body {
+  margin: 0; font-family: var(--sans); color: var(--ink); background: var(--bg);
+  height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased;
+}
+/* shell.js renders the chrome into #mi-root — it must fill the viewport so the editor/sidebar can
+   flex to the bottom (otherwise it collapses to content height and leaves an empty area below). */
+#mi-root { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+
+/* ---- accessibility base ---- */
+:where(a) { color: var(--link); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .001ms !important; animation-duration: .001ms !important; }
+}
+
+/* ---- top bar ---- */
+header.mi-bar {
+  position: relative; display: flex; align-items: center; gap: var(--s-s);
+  padding: 8px var(--s-s); background: var(--panel); border-bottom: 1px solid var(--line); flex: 0 0 auto;
+}
+header.mi-bar::before {   /* subtle brand gradient hairline */
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--ee-deep-purple), var(--ee-bright-purple), var(--ee-sunset));
+}
+.mi-bar .mi-id { display: flex; flex-direction: column; line-height: 1.2; }
+.mi-bar .mi-title { font-weight: 600; font-size: 14px; }
+.mi-bar .mi-sub { font-size: 12px; color: var(--muted); }
+.mi-bar .mi-spacer { flex: 1; }
+
+.mi-phases { display: flex; align-items: center; gap: 4px; }
+.mi-phase {
+  position: relative; overflow: hidden; font-family: var(--sans);
+  font-size: 11px; letter-spacing: .03em; text-transform: uppercase; font-weight: 500;
+  padding: 4px 10px; border-radius: var(--radius-pill); color: var(--muted);
+  background: var(--bg); border: 1px solid var(--line); cursor: pointer; user-select: none; transition: var(--transition);
+}
+/* fill = how much of this phase's time budget has elapsed; full = "you should be moving on" */
+.mi-phase-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--accent-soft);
+  transition: width .25s linear; z-index: 0; }
+.mi-phase-label { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; }
+.mi-phase-label em { font-style: normal; font-size: 9px; opacity: .7; font-weight: 600; }
+.mi-phase.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }  /* where you are */
+.mi-phase.expected { box-shadow: inset 0 0 0 1px var(--accent); }                                        /* where the clock says you should be */
+.mi-phase.over { border-color: var(--warn); color: var(--warn); }                                       /* you're overrunning this phase */
+.mi-phase.over .mi-phase-fill { background: color-mix(in srgb, var(--warn) 22%, var(--panel)); }
+.mi-phase-cfg { margin-left: 2px; font-size: 13px; line-height: 1; padding: 4px 7px; border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; }
+.mi-phase-cfg:hover { background: var(--panel-2); }
+
+/* phase config popover */
+.mi-pop { position: fixed; z-index: 50; width: 300px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 14px; }
+.mi-pop-title { font-weight: 600; font-size: 13px; margin-bottom: 10px; }
+.mi-pop-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.mi-pop input { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--ink); }
+.mi-pop-name { flex: 1; } .mi-pop-min { width: 64px; }
+.mi-pop-del { width: 30px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
+  color: var(--muted); cursor: pointer; font-size: 15px; }
+.mi-pop-del:hover { color: var(--danger); border-color: var(--danger); }
+#mi-pop-add { width: 100%; margin: 4px 0 10px; }
+.mi-pop-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mi-pop-note { font-size: 11px; color: var(--muted); }
+
+.mi-timer {
+  font-family: var(--mono); font-size: 18px; font-weight: 500;
+  padding: 4px 10px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--line);
+  min-width: 84px; text-align: center; color: var(--ink);
+}
+.mi-timer.over { color: var(--danger); border-color: var(--danger); }
+.mi-btn {
+  font: inherit; font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; transition: var(--transition);
+}
+.mi-btn:hover { background: var(--panel-2); }
+.mi-btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.mi-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.mi-btn.ghost { background: transparent; }
+.mi-iconbtn { font-size: 16px; line-height: 1; padding: 6px 9px; border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.mi-iconbtn:hover { background: var(--panel-2); }
+.mi-iconbtn.mi-home { text-decoration: none; font-size: 17px; display: inline-flex; align-items: center; }
+
+/* ---- layout ---- */
+.mi-main { flex: 1 1 auto; display: flex; min-height: 0; }
+.mi-work { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+.mi-side {
+  flex: 0 0 340px; border-left: 1px solid var(--line); background: var(--panel);
+  display: flex; flex-direction: column; min-height: 0; transition: flex-basis var(--transition);
+}
+.mi-side.wide { flex-basis: 52%; }
+
+.mi-railtabs { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.mi-railtab { font: inherit; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; font-weight: 500;
+  padding: 5px 12px; border: 1px solid transparent; border-radius: var(--radius); background: transparent;
+  color: var(--muted); cursor: pointer; }
+.mi-railtab.active { background: var(--accent-soft); color: var(--accent); border-color: var(--line); }
+.mi-railtab-flag { position: relative; }
+.mi-railtab-flag::after { content: ""; position: absolute; top: 2px; right: 3px; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent); }   /* feedback is ready to read */
+.mi-railwide { font-size: 15px; line-height: 1; padding: 4px 8px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--panel); color: var(--muted); cursor: pointer; }
+.mi-railwide:hover { background: var(--panel-2); }
+.mi-spacer { flex: 1; }
+
+.mi-railpanel { flex: 1 1 auto; overflow: auto; min-height: 0; }
+/* must beat `.mi-notes { display:flex }` etc., or panels never hide on tab switch */
+.mi-railpanel[hidden] { display: none; }
+.mi-prompt { padding: var(--s-s) 18px; font-size: 14.5px; line-height: 1.6; }
+.mi-prompt h1 { font-size: 18px; font-weight: 600; margin: 0 0 .5em; }
+.mi-prompt h2 { font-size: 14px; font-weight: 600; margin: 1.1em 0 .3em; }
+.mi-prompt code { font-family: var(--mono); font-size: 13px; background: var(--panel-2); padding: 1px 4px; border-radius: 4px; }
+.mi-prompt pre { background: var(--editor-bg); color: var(--editor-ink); padding: 10px; border-radius: var(--radius); overflow: auto; }
+.mi-prompt pre code { background: none; color: inherit; }
+
+.mi-notes { display: flex; flex-direction: column; }
+.mi-notes textarea {
+  flex: 1; border: 0; padding: 14px var(--s-s); font: 13.5px/1.55 var(--sans); resize: none; outline: none;
+  color: var(--ink); background: var(--panel);
+}
+.mi-savebar { font-size: 11px; color: var(--muted); padding: 4px var(--s-s); border-top: 1px solid var(--line);
+  display: flex; align-items: center; gap: 8px; }
+.mi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
+.mi-dot.saving { background: var(--warn); }
+.mi-dot.saved { background: var(--success); }
+
+.mi-banner { padding: 8px var(--s-s); font-size: 12.5px; background: color-mix(in srgb, var(--warn) 14%, var(--panel));
+  color: var(--warn); border-bottom: 1px solid color-mix(in srgb, var(--warn) 30%, var(--panel)); }
+.mi-banner.hide { display: none; }
+
+/* Improve (iteration notes) tab */
+.mi-improve-hint { padding: 12px var(--s-s); font-size: 12px; line-height: 1.5; color: var(--muted);
+  background: var(--accent-soft); border-bottom: 1px solid var(--line); }
+.mi-improve-hint b { color: var(--accent); }
+.mi-improve-hint code { font-family: var(--mono); font-size: 11px; background: var(--panel); padding: 1px 4px; border-radius: 4px; }
+
+/* help / FAQ overlay */
+.mi-help-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(20,16,32,.55);
+  display: flex; align-items: center; justify-content: center; padding: 24px; }
+.mi-help-card { position: relative; max-width: 760px; width: 100%; max-height: 86vh; overflow: auto;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow); padding: 28px 30px; }
+.mi-help-x { position: absolute; top: 14px; right: 14px; font-size: 20px; line-height: 1; width: 34px; height: 34px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); color: var(--ink); cursor: pointer; }
+.mi-help-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 600; }
+.mi-help-lead { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0 0 18px; }
+.mi-help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+.mi-help-grid h3 { margin: 0 0 4px; font-size: 13.5px; font-weight: 600; color: var(--accent); }
+.mi-help-grid p { margin: 0; font-size: 13px; line-height: 1.5; }
+.mi-help-grid b { font-weight: 600; }
+.mi-help-dismiss { display: flex; align-items: center; gap: 8px; margin-top: 20px; font-size: 13px; color: var(--muted); }
+@media (max-width: 640px) { .mi-help-grid { grid-template-columns: 1fr; } }
+
+/* conversation log — read-only chat bubbles */
+.mi-transcript { display: flex; flex-direction: column; }
+.mi-tx-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px var(--s-s);
+  border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); flex: 0 0 auto; }
+.mi-tx-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.mi-tx-status { font-size: 11px; color: var(--warn); }
+.mi-tx-list { flex: 1 1 auto; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.mi-tx-empty { color: var(--muted); font-size: 13px; text-align: center; margin: auto; max-width: 260px; line-height: 1.5; }
+.mi-bubble-row { display: flex; }
+.mi-bubble-row.right { justify-content: flex-end; }
+.mi-bubble-row.left { justify-content: flex-start; }
+.mi-bubble { max-width: 84%; padding: 8px 12px; border-radius: 14px; font-size: 13px; line-height: 1.45; }
+.mi-bubble-who { display: block; font-size: 10px; opacity: .75; margin-bottom: 2px; font-weight: 600; }
+.mi-bubble-txt code { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,.12); padding: 1px 4px; border-radius: 4px; }
+.mi-bubble.them { background: var(--panel-2); color: var(--ink); border-bottom-left-radius: 4px; }     /* interviewer */
+.mi-bubble.me { background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; } /* you */
+.mi-bubble.me .mi-bubble-txt code { background: rgba(255,255,255,.18); }
+.mi-bubble.meta { background: color-mix(in srgb, var(--warn) 16%, var(--panel)); color: var(--ink);
+  border: 1px dashed var(--warn); border-radius: 12px; }                                                /* fourth-wall aside */
+.mi-bubble-tag { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--warn); font-weight: 700; margin-bottom: 3px; }
+.mi-bubble-time { display: block; font-size: 9px; opacity: .6; margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+
+/* shared dark code-editor theme — used by EVERY pad via lib/editor.js, so they look identical */
+.CodeMirror.cm-dark { height: 100%; font: 14px/1.6 var(--mono); background: var(--editor-bg); color: var(--editor-ink); }
+.CodeMirror.cm-dark .CodeMirror-gutters { background: var(--editor-gutter); border-right: 1px solid var(--editor-gutter); }
+.CodeMirror.cm-dark .CodeMirror-linenumber { color: var(--editor-lineno); }
+.CodeMirror.cm-dark .CodeMirror-cursor { border-left: 1px solid var(--syn-cursor); }
+/* Syntax highlighting via theme-aware tokens (dark-on-light in light theme, light-on-dark in dark theme),
+   so the editor flips cleanly with the toggle and stays readable in both. */
+.CodeMirror.cm-dark .cm-comment { color: var(--syn-comment); font-style: italic; }
+.CodeMirror.cm-dark .cm-keyword, .CodeMirror.cm-dark .cm-qualifier { color: var(--syn-keyword); }
+.CodeMirror.cm-dark .cm-atom, .CodeMirror.cm-dark .cm-number { color: var(--syn-number); }
+.CodeMirror.cm-dark .cm-def { color: var(--syn-def); }
+.CodeMirror.cm-dark .cm-variable { color: var(--editor-ink); }
+.CodeMirror.cm-dark .cm-variable-2 { color: var(--syn-property); }
+.CodeMirror.cm-dark .cm-property, .CodeMirror.cm-dark .cm-attribute { color: var(--syn-property); }
+.CodeMirror.cm-dark .cm-operator { color: var(--syn-operator); }
+.CodeMirror.cm-dark .cm-string, .CodeMirror.cm-dark .cm-string-2 { color: var(--syn-string); }
+.CodeMirror.cm-dark .cm-builtin { color: var(--syn-builtin); }
+.CodeMirror.cm-dark .cm-tag { color: var(--syn-tag); }
+.CodeMirror.cm-dark .cm-meta, .CodeMirror.cm-dark .cm-header { color: var(--syn-meta); }
+.CodeMirror.cm-dark .CodeMirror-matchingbracket { font-weight: 700; background: color-mix(in srgb, var(--accent) 30%, transparent); }
+.CodeMirror.cm-dark div.CodeMirror-selected, .CodeMirror.cm-dark .CodeMirror-selectedtext { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* Responsive rail header: a single-line tab bar when the panel is wide enough, a dropdown when it's narrow
+   (container query on the panel itself — no wrapping, no JS). Plus a collapse state to reclaim the panel. */
+.mi-side { container-type: inline-size; }
+.mi-railtabbtns { display: flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.mi-railselect { display: none; flex: 1 1 auto; min-width: 0; font: inherit; font-size: 13px; padding: 5px 8px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
+@container (max-width: 520px) {
+  .mi-railtabbtns { display: none; }
+  .mi-railselect { display: block; }
+  .mi-railtabs .mi-spacer { display: none; }
+}
+.mi-railexpand { display: none; }
+.mi-side.collapsed, .mi-side.collapsed.wide { flex-basis: 40px; }
+.mi-side.collapsed > .mi-railtabs, .mi-side.collapsed > .mi-railpanel { display: none; }
+.mi-side.collapsed .mi-railexpand { display: flex; align-items: center; justify-content: center; gap: 6px;
+  writing-mode: vertical-rl; width: 40px; height: 100%; border: 0; border-left: 1px solid var(--line);
+  border-radius: 0; background: var(--panel); color: var(--muted); cursor: pointer; font-size: 12px; letter-spacing: .05em; }
+.mi-side.collapsed .mi-railexpand:hover { background: var(--panel-2); }
+
+/* speedrun-style time splits */
+.mi-splits-panel { padding: 12px 14px; }
+.mi-sp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mi-sp-table th { text-align: right; font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.mi-sp-table th:first-child, .mi-sp-table td.mi-sp-name { text-align: left; }
+.mi-sp-table td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums; }
+.mi-sp-table tfoot td { border-top: 2px solid var(--line); border-bottom: 0; font-weight: 600; }
+.mi-sp-cur { background: var(--accent-soft); }
+.mi-sp-live { color: var(--accent); font-size: 9px; }
+.mi-sp-under { color: var(--success); } .mi-sp-over { color: var(--warn); }
+.mi-sp-hint { margin-top: 10px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+/* phase-advance pulse + timer-expiry flash (visual cues; complement the sound, work when muted) */
+@keyframes mi-pulse { 0% { box-shadow: 0 0 0 0 var(--accent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.mi-phase.pulse { animation: mi-pulse .9s ease-out 1; }
+@keyframes mi-flash { 0%, 100% { background: var(--bg); } 50% { background: var(--danger); color: #fff; } }
+.mi-timer.flash { animation: mi-flash .4s ease-in-out 3; }

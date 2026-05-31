@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interview Portfolio</title>
+  <script src="/shell/theme.js"></script>
+  <link rel="stylesheet" href="/shell/shell.css">
+  <style>
+    body { display:block; overflow:auto; }
+    .pf-wrap { max-width:980px; margin:0 auto; padding:28px 20px 60px; }
+    .pf-topbar { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+    .pf-brand { width:34px; height:34px; border-radius:9px;
+      background:linear-gradient(135deg, var(--ee-deep-purple), var(--ee-bright-purple), var(--ee-sunset)); flex:0 0 auto; }
+    .pf-head { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+    .pf-head h1 { font-size:22px; font-weight:600; margin:0; }
+    .pf-head .pf-who { color:var(--muted); font-size:14px; }
+    .pf-controls { display:flex; gap:10px; margin:18px 0; flex-wrap:wrap; }
+    .pf-controls input, .pf-controls select { font:inherit; font-size:14px; padding:7px 10px;
+      border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink); }
+    .pf-controls option { background:var(--panel); color:var(--ink); }
+    .pf-controls input[type=text], .pf-controls #pf-search { flex:1; min-width:200px; }
+    .pf-ft { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); white-space:nowrap; cursor:pointer; }
+    .pf-ft-status { color:var(--warn); font-size:12px; }
+    table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line);
+      border-radius:10px; overflow:hidden; }
+    th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:14px; }
+    th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); background:var(--bg); cursor:pointer; }
+    tr:last-child td { border-bottom:0; }
+    tr:hover td { background:var(--panel-2); }
+    a.pf-open { color:var(--accent); font-weight:600; text-decoration:none; }
+    a.pf-open:hover { text-decoration:underline; }
+    .pf-pill { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+    .pf-pill.completed { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
+    .pf-pill.in_progress { color:var(--warn); border-color:var(--warn); }
+    .pf-pill.ended { color:var(--warn); border-color:var(--warn); background:var(--accent-soft); }
+    .pf-empty { color:var(--muted); padding:24px; text-align:center; }
+    footer { margin-top:22px; font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="pf-wrap">
+    <div class="pf-topbar">
+      <div class="pf-brand" aria-hidden="true"></div>
+      <div class="pf-head">
+        <h1>Interview Portfolio</h1>
+        <span class="pf-who" id="pf-who"></span>
+      </div>
+      <span class="mi-spacer"></span>
+      <button class="mi-iconbtn" data-theme-toggle aria-label="Toggle theme">☾</button>
+    </div>
+    <div class="pf-controls">
+      <input id="pf-search" placeholder="Search title, company, type… (toggle Full-text to search inside prompts & feedback)">
+      <select id="pf-type"><option value="">All types</option></select>
+      <select id="pf-status">
+        <option value="">Any status</option>
+        <option value="not_started">Not started</option>
+        <option value="in_progress">In progress</option>
+        <option value="ended">Ended (awaiting retro)</option>
+        <option value="completed">Completed</option>
+      </select>
+      <label class="pf-ft" title="Also search the full text of each interview's prompt and feedback">
+        <input type="checkbox" id="pf-ft"> Full-text<span class="pf-ft-status" id="pf-ft-status"></span>
+      </label>
+    </div>
+    <table>
+      <thead><tr>
+        <th data-sort="title">Interview</th><th data-sort="type">Type</th>
+        <th data-sort="company">Company</th><th data-sort="level">Level</th>
+        <th data-sort="date">Date</th><th data-sort="status">Status</th><th data-sort="overall">Result</th>
+      </tr></thead>
+      <tbody id="pf-rows"></tbody>
+    </table>
+    <div class="pf-empty" id="pf-empty" hidden>No interviews match.</div>
+    <footer id="pf-foot"></footer>
+  </div>
+  <script>
+    let DATA = [], sortKey = "date", sortDir = -1, ftEnabled = false, indexed = false;
+    const esc = s => (s ?? "").toString().replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    fetch("portfolio.json").then(r => r.json()).then(pf => {
+      DATA = pf.interviews || [];
+      document.getElementById("pf-who").textContent =
+        pf.candidate ? `${pf.candidate.name || ""} · ${(pf.candidate.target_levels || []).join("/")} · ${DATA.length} interviews` : "";
+      const types = [...new Set(DATA.map(d => d.type))];
+      document.getElementById("pf-type").insertAdjacentHTML("beforeend",
+        types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join(""));
+      const a = pf.attribution || {}, links = a.links || {};
+      const parts = [];
+      if (a.org) parts.push(`Built with the ${esc(a.org)} Tech Interview methodology`);
+      if (links.website) parts.push(`<a href="${esc(links.website)}">${esc(links.website.replace(/^https?:\/\//, ""))}</a>`);
+      if (links.github) parts.push(`<a href="${esc(links.github)}">GitHub</a>`);
+      parts.push(`<a href="https://claude.com/claude-code">Claude Code</a>`);
+      document.getElementById("pf-foot").innerHTML = parts.join(" · ");
+      render();   // metadata-only by default; full-text indexing happens lazily when the toggle is enabled
+      refreshLiveStatus();                       // reflect live per-interview status, not just the snapshot
+      setInterval(refreshLiveStatus, 15000);
+    }).catch(() => { document.getElementById("pf-empty").hidden = false;
+      document.getElementById("pf-empty").textContent = "Could not load portfolio.json — start the server (python3 shell/serve.py)."; });
+
+    function render() {
+      const q = document.getElementById("pf-search").value.toLowerCase();
+      const ty = document.getElementById("pf-type").value, st = document.getElementById("pf-status").value;
+      let rows = DATA.filter(d =>
+        (!ty || d.type === ty) && (!st || d.status === st) &&
+        [d.title, d.company, d.type, d.level, ftEnabled ? d._text : ""].some(v => (v || "").toString().toLowerCase().includes(q)));
+      rows.sort((a, b) => ((a[sortKey] || "") > (b[sortKey] || "") ? 1 : -1) * sortDir);
+      const tb = document.getElementById("pf-rows");
+      tb.innerHTML = rows.map(d => `<tr>
+        <td><a class="pf-open" href="${esc(d.slug)}/interview.html">${esc(d.title || d.slug)}</a></td>
+        <td>${esc(d.type)}</td><td>${esc(d.company || "—")}</td><td>${esc(d.level || "—")}</td>
+        <td>${esc(d.date || "")}</td>
+        <td><span class="pf-pill ${esc(d.status)}">${esc((d.status || "").replace("_", " "))}</span></td>
+        <td>${esc(d.overall || "—")}</td></tr>`).join("");
+      document.getElementById("pf-empty").hidden = rows.length > 0;
+    }
+    // Override the portfolio.json snapshot with each interview's live state: interview.json (status/overall,
+    // written by the interviewer at the Retro) and artifacts/_session.json (ended / time elapsed in the UI).
+    async function refreshLiveStatus() {
+      await Promise.all(DATA.map(async d => {
+        const slug = encodeURIComponent(d.slug);
+        try {
+          const r = await fetch(`${slug}/interview.json`, { cache: "no-store" });
+          if (r.ok) { const j = await r.json(); if (j.status) d.status = j.status; if (j.overall != null) d.overall = j.overall; }
+        } catch (e) {}
+        if (d.status !== "completed") {
+          try {
+            const s = await fetch(`${slug}/artifacts/_session.json`, { cache: "no-store" });
+            if (s.ok) { const sj = await s.json();
+              if (sj.ended) d.status = "ended";
+              else if ((sj.elapsed_seconds || 0) > 0 && d.status === "not_started") d.status = "in_progress"; }
+          } catch (e) {}
+        }
+      }));
+      render();
+    }
+    async function indexContent() {
+      // Pull each interview's prompt + feedback so search matches a specific phrase, not just metadata.
+      await Promise.all(DATA.map(async d => {
+        let txt = "";
+        for (const f of ["prompt.md", "feedback.md"]) {
+          try { const r = await fetch(`${encodeURIComponent(d.slug)}/${f}`); if (r.ok) txt += " " + await r.text(); } catch (e) {}
+        }
+        d._text = txt.toLowerCase();
+      }));
+      render();
+    }
+    document.querySelectorAll("[data-sort]").forEach(th => th.onclick = () => {
+      const k = th.dataset.sort; sortDir = (sortKey === k) ? -sortDir : 1; sortKey = k; render();
+    });
+    ["pf-search", "pf-type", "pf-status"].forEach(id => document.getElementById(id).addEventListener("input", render));
+    document.getElementById("pf-ft").addEventListener("change", async e => {
+      ftEnabled = e.target.checked;
+      if (ftEnabled && !indexed) {                 // fetch prompt/feedback text only on first enable
+        indexed = true;
+        document.getElementById("pf-ft-status").textContent = " (indexing…)";
+        await indexContent();
+        document.getElementById("pf-ft-status").textContent = "";
+      }
+      render();
+    });
+  </script>
+</body>
+</html>
