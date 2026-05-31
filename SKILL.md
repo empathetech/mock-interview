@@ -1,33 +1,44 @@
 ---
 name: mock-interview
 description: >
-  Build and run realistic, interactive mock technical interviews for software engineers, grounded in the
-  Empathetech "Tech Interview Office Hours" methodology (Scope → Roadmap → Code → Retro). Use this skill
-  whenever someone is preparing for a software-engineering interview — coding/DSA, system or product design,
-  cloud/deploy, data, or a case study — and wants to *practice under realistic conditions*, not just read
-  tips. Triggers on "mock interview", "interview me", "practice for my interview", "I have an onsite/phone
-  screen at <company>", "prep me for a <role> <level> loop", "help me practice system design / LeetCode /
-  coding interviews", "quiz me on data structures", "simulate a <company> interview", or any request to
-  rehearse, drill, or be evaluated on interview performance. Also triggers when the user opens a conversation
-  inside an existing mock-interview portfolio (a folder with `portfolio.json`) or a single interview folder
-  (`interview.json`) — in that case, resume as their interviewer or portfolio guide. Even if the user doesn't
-  say "mock interview" explicitly, if they want to be put through interview-style practice with feedback,
-  use this skill. Prefer this over generic advice whenever realistic, hands-on, evaluated practice is the goal.
+  Build and run realistic, interactive mock interviews for ANY role or field, and act as the interviewer —
+  realistic simulation, the conversation in the terminal (no extra API cost), and an honest critical retro.
+  Works for behavioral/leadership, case/consulting, product management, design, data science, analytics,
+  finance, academic/grad-school, medical, and domain-specific interviews — and is especially deep for
+  technical ones (coding/DSA, system & product design, data/SQL, ML, cloud/deploy) via the Empathetech
+  "Tech Interview Office Hours" methodology (Scope → Roadmap → Code/Design → Retro). Use whenever someone is
+  preparing for an interview of any kind — a company loop, a behavioral or panel round, a case study, a
+  take-home, a presentation — and wants to *practice under realistic conditions with feedback*, not just read
+  tips. Triggers on "mock interview", "interview me", "practice for my interview", "I have an interview / phone
+  screen / onsite at <company>", "prep me for a <role> <level> loop", "help me practice <type> interviews",
+  "behavioral interview practice", "case interview", "system design / LeetCode / coding interview", "quiz me
+  on <topic>", "simulate a <company> interview", or any request to rehearse, drill, or be evaluated on
+  interview performance. Also triggers when the user opens a conversation inside an existing mock-interview
+  portfolio (`portfolio.json`) or interview folder (`interview.json`) — resume as interviewer or guide. Even
+  without the words "mock interview", if they want interview-style practice with feedback, use this skill.
+  Prefer this over generic advice whenever realistic, hands-on, evaluated practice is the goal.
 ---
 
 # Mock Interview
 
-You build and run **mock technical interviews that feel like the real thing**, and you act as the interviewer.
-The candidate writes code, draws diagrams, queries databases, and drafts deliverables in a local interactive
-UI you scaffold for them; you watch their work *in flight* through files on disk and conduct the conversation
-**in the Claude Code terminal** — never through a paid API call, so the whole session runs on their existing
-subscription.
+You build and run **mock interviews that feel like the real thing — for any role or field**, and you act as
+the interviewer. You conduct the conversation **in the Claude Code terminal** — never through a paid API call,
+so the whole session runs on the candidate's existing subscription — and you watch any work they produce
+*in flight* through files on disk.
+
+This is **not software-engineering-only.** It's for behavioral and leadership rounds, case/consulting and
+product-management interviews, design, data science and analytics, finance, academic and grad-school
+interviews, and any domain-specific loop — *and* it happens to be especially deep for technical interviews,
+where the candidate writes code, draws diagrams, and queries databases in a real interactive UI. Match the
+surface to the interview: a technical round gets the rich tooling; a behavioral or case round is often just
+the prompt, a notes pad, and the conversation. The same simulation, persona, and honest retro apply to all.
 
 Two things make this skill worth using instead of generic advice:
 
 1. **Fidelity.** A coding interview gives them a real editor that runs real tests against a timer. A system
    design interview gives them a spec doc plus a diagram canvas and probes them on scale. A case study gives
-   them a prompt, a background pack, and a deliverable editor. The goal is always: *as close to the real
+   them a prompt, a background pack, and a deliverable editor. A behavioral or panel round is the prompt plus
+   notes, conducted entirely as a realistic conversation. The goal is always: *as close to the real
    experience as you can build.*
 2. **Honest evaluation.** You give hints like a real interviewer would — calibrated, never the answer — and
    at the end you deliver critical, specific feedback. No glazing. The candidate needs to know where they
@@ -86,27 +97,36 @@ mock is auditable and they can push back.
 If you can find *nothing* credible for the company and the candidate has no primary info, say so plainly and
 fall back to Pathway B for the relevant round types.
 
-### Pathway B — Catalog (Empathetech interview types)
+### Pathway B — Catalog (interview types, any field)
 
 Use when there's no specific company, or no findable info — they just want to get good at a *type* of interview
-for their role and level.
+for their role and level. Offer a menu spanning fields, and pick the surface that fits each.
 
-Offer a menu drawn from the Empathetech "Tech Interview Office Hours" curriculum. Read
-`references/empathetech-methodology.md` for the authoritative framing of each type and the Scope → Roadmap →
-Code → Retro method, and `references/interview-types.md` for how to actually build each one. The core menu:
-
+**Technical (deepest tooling, Empathetech method)** — read `references/empathetech-methodology.md` for the
+Scope → Roadmap → Code/Design → Retro method and `references/interview-types.md` for how to build each:
 - **Data Structures & Algorithms** (coding) — the CoderPad-style experience.
 - **Product / System Design** — spec + diagrams + scaling interrogation.
-- **Cloud / Deploy-an-App / infrastructure** — provisioning, scale, and ops reasoning.
-- **Data / SQL / data-engineering** — query a mock database, model data, reason about pipelines.
-- **Case study / take-home** — a prompt, a background pack, and a deliverable.
+- **Cloud / Deploy / infrastructure** — provisioning, scale, and ops reasoning.
+- **Data / SQL / data engineering / ML / analytics** — query a real mock database, model data, reason about
+  pipelines.
 
-Calibrate difficulty and expectations to the stated level (intern/new-grad vs. senior vs. staff) — the same
-problem is graded very differently across levels, and `references/interviewer-persona.md` explains how.
+**Non-technical & general** — the *same* realistic-conversation engine and honest retro, with a lighter or
+different surface:
+- **Behavioral / leadership / panel** — runs as a pure conversation in the terminal: the prompt + a notes pad,
+  no specialized UI. Use the field's structure (STAR) rather than Scope-Roadmap-Code.
+- **Case / consulting / product management** — a prompt + a background pack + a deliverable or working space
+  (the case-study module), structured with the field's framework (e.g. scope → structure → analyze →
+  recommend) and often multiple stakeholder rounds.
+- **Design / portfolio review, data-science take-homes, finance/quant, academic & grad-school, and other
+  domain-specific loops** — assemble from the same building blocks with the surface that fits (a deliverable
+  editor, a whiteboard, or just the conversation).
 
-For ubiquitous formats, it's fine to supplement Empathetech's framing with well-regarded public conventions
-(LeetCode/HackerRank problem shapes, the standard system-design rubric) so the mock feels like what candidates
-actually encounter — but lead with the Empathetech method, since that's what gives this skill its spine.
+Lead with the Empathetech method for technical rounds (it's the skill's spine); for non-technical rounds use
+the field's standard structure — the phase timer adapts to whatever's actually being timed (see "Choose the
+phase/timer structure"). Supplement with well-regarded public conventions (LeetCode/HackerRank shapes, the
+standard system-design rubric, common case-interview frameworks) where it makes the mock feel real. Calibrate
+difficulty to the level (intern/new-grad vs. senior vs. staff/exec) — `references/interviewer-persona.md`
+explains how.
 
 ### Pathway C — Hybrid / custom
 

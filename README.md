@@ -1,14 +1,16 @@
 # mock-interview
 
 A [Claude Code](https://claude.com/claude-code) skill that builds and runs **realistic, interactive mock
-technical interviews for software engineers** — grounded in Empathetech's "Tech Interview Office Hours"
+interviews for any role or field** — behavioral, case/consulting, product, design, data, finance, academic,
+and more — and is *especially* deep for technical interviews via Empathetech's "Tech Interview Office Hours"
 methodology (**Scope → Roadmap → Code/Design → Retro**).
 
-You do the work in a local interactive UI (a real code editor that runs real tests, a system-design diagram
-canvas, a SQL console over a seeded database, a deliverable editor); Claude plays the **interviewer in the
-terminal** — reading your work in flight and conversing there, so the interview runs on your existing Claude
-subscription with **no extra API cost**. At the end you get a critical, honest **Plus / Minus / Delta** retro,
-and every session is saved to a local portfolio you can grow over time.
+Claude plays the **interviewer in the terminal** — conversing with you and reading any work you produce in
+flight, so the interview runs on your existing Claude subscription with **no extra API cost**. The surface
+matches the interview: a technical round gives you a real code editor that runs tests, a system-design diagram
+canvas, or a live SQL console; a case or take-home gives you a deliverable workspace; a behavioral or panel
+round is simply the prompt, a notes pad, and a realistic conversation. At the end you get a critical, honest
+**Plus / Minus / Delta** retro, and every session is saved to a local portfolio you can grow over time.
 
 ## What it looks like
 
@@ -54,10 +56,11 @@ nothing else to set up.
 1. **Company-specific** — give Claude your real loop details (recruiter email, prep doc, take-home brief) and
    it reconstructs that interview as faithfully as possible, supplementing from public sources where your docs
    are silent (your docs always win on conflicts).
-2. **Catalog** — pick a type for your role + level: DS&A coding, product/system design, cloud/deploy,
-   data/SQL, or a case study. Built on the Empathetech method.
-3. **Hybrid / custom** — "drill me on window functions," "design a rate limiter," etc. — assembled from the
-   same building blocks, scoped to what you ask.
+2. **Catalog** — pick a type for your role + level across fields: technical (DS&A coding, product/system
+   design, cloud/deploy, data/SQL/ML — built on the Empathetech method), behavioral/leadership, case/
+   consulting, product management, design, and other domain-specific interviews.
+3. **Hybrid / custom** — "drill me on window functions," "design a rate limiter," "grill me on my leadership
+   stories," "run me through a market-sizing case" — assembled from the same building blocks, scoped to your ask.
 
 ## What makes it realistic
 
@@ -69,11 +72,17 @@ nothing else to set up.
 - **In character** — Claude stays in the interviewer persona; step out for a meta question any time ("can we
   pause for a sec?") and step back in.
 
-## Interview types (modules)
+## Interview types
 
-Coding/DSA, product/system design (Mermaid + Excalidraw), data/SQL (DuckDB-WASM), case study + multi-round
-stakeholder loops, and multi-section timed screeners (e.g. SQL + executable Python) — all composed from one
-reusable shell + a shared code-editor component. Light/dark themed, WCAG-AA, keyboard-accessible.
+**Technical (richest tooling):** coding/DSA, product/system design (Mermaid + Excalidraw), data/SQL
+(DuckDB-WASM), and multi-section timed screeners (e.g. SQL + executable Python).
+**Case & deliverable-based:** case/consulting and product interviews with a deliverable workspace + timed
+multi-round stakeholder loops.
+**Conversational:** behavioral, leadership, panel, and other non-technical rounds — just the prompt, a notes
+pad, and a realistic conversation; no specialized UI needed.
+
+All composed from one reusable shell + a shared editor component. Light/dark themed, WCAG-AA,
+keyboard-accessible.
 
 ## Dependencies
 

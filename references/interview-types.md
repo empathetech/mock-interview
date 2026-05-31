@@ -198,10 +198,27 @@ screen (e.g. `[{ "name": "Screen", "minutes": 50 }]`) is the right timer structu
 
 ---
 
-## Behavioral-adjacent rounds
+## Non-technical & conversational interviews (any field)
 
-This skill centers technical rounds, but company loops include behavioral/leadership rounds. When a
-company-specific loop has one, you can run it conversationally in the terminal (STAR stories) and capture
-notes/feedback as an instance with no special module — `prompt.md` holds the themes, `artifacts/notes.md`
-holds their prepared stories. Keep the same no-glazing Retro. The method explicitly compares
-Scope-Roadmap-Code-Retro to STAR, so the spine still applies.
+The skill has the deepest *tooling* for technical rounds, but it works for **any** interview — and many
+interviews need no specialized pad at all. Match the surface to the format:
+
+- **Behavioral / leadership / panel** — runs as a pure conversation in the terminal. Create an instance with
+  no module beyond the shell: `prompt.md` holds the themes/competencies (or "tell me about a time…" leads),
+  `artifacts/notes.md` is the candidate's scratch space for STAR stories, and you interview them in character.
+  Structure with the field's framework (STAR: Situation/Task/Action/Result) rather than Scope-Roadmap-Code;
+  the method explicitly likens its four-part spine to STAR, so the *discipline* carries over. The phase pills
+  can be the round's natural beats or just a single timed block.
+- **Case / consulting / product-management / product-sense** — use the **case-study module**: a prompt + a
+  background pack + a deliverable/working space, structured with the field's framework (e.g. scope → structure
+  → analyze → recommend; or a PM product-sense framework), often across multiple stakeholder rounds.
+- **Design / portfolio review, data-science take-homes, finance & quant, academic & grad-school, medical,
+  and other domain loops** — assemble from the same building blocks: a deliverable editor for take-homes, a
+  diagram canvas where a visual matters, a SQL/data console for analytics, or just the conversation. When a
+  field has a standard rubric (e.g. a consulting case rubric, a PM framework, a research-fit interview), use
+  it; otherwise fall back to scope → plan → execute → reflect, which generalizes.
+
+Whatever the field, the engine is identical: realistic in-character conversation, in-flight reading of any
+artifacts, the fourth-wall protocol, and the honest no-glazing **Plus / Minus / Delta** Retro calibrated to
+the role and level. Don't force technical tooling onto a conversational interview — the conversation *is* the
+interview.
