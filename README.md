@@ -10,6 +10,46 @@ terminal** — reading your work in flight and conversing there, so the intervie
 subscription with **no extra API cost**. At the end you get a critical, honest **Plus / Minus / Delta** retro,
 and every session is saved to a local portfolio you can grow over time.
 
+## What it looks like
+
+| Coding / DSA — real editor, executable tests | Product / system design — live diagram canvas |
+| :---: | :---: |
+| ![Coding interview with passing tests](assets/screenshots/coding.png) | ![System design with a rendered diagram](assets/screenshots/system-design.png) |
+| **Data screener — DuckDB SQL console + executable Python** | **Case study — pick a prompt, then timed stakeholder rounds** |
+| ![SQL screener checking a query against the expected result](assets/screenshots/screener-sql.png) | ![Case-study prompt chooser and deliverable](assets/screenshots/case-study.png) |
+
+Every session is saved to a searchable local portfolio:
+
+![Portfolio dashboard](assets/screenshots/portfolio.png)
+
+## Install
+
+This is a Claude Code skill — drop it in your Claude Code **skills** directory and it activates whenever you
+ask for interview practice (or type `/mock-interview`).
+
+**Requirements:** [Claude Code](https://claude.com/claude-code), `git`, and **python3** (for the local
+interview server). `node` and `gh` are optional — see [Dependencies](#dependencies).
+
+Clone this repo into your personal skills directory:
+
+**macOS / Linux**
+```bash
+git clone https://github.com/empathetech/mock-interview ~/.claude/skills/mock-interview
+```
+
+**Windows (PowerShell)**
+```powershell
+git clone https://github.com/empathetech/mock-interview "$env:USERPROFILE\.claude\skills\mock-interview"
+```
+
+That's the whole install. Open Claude Code and say *"mock interview me for a senior backend coding round"*
+(or run `/mock-interview`). The skill scaffolds a local interview UI into `~/mock-interviews/` on first use —
+nothing else to set up.
+
+- **Update:** `git -C ~/.claude/skills/mock-interview pull` (macOS/Linux), or
+  `git -C "$env:USERPROFILE\.claude\skills\mock-interview" pull` (Windows).
+- **Project-local instead of global?** Clone into `<your-project>/.claude/skills/mock-interview`.
+
 ## Three pathways
 
 1. **Company-specific** — give Claude your real loop details (recruiter email, prep doc, take-home brief) and
