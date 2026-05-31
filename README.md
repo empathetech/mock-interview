@@ -15,12 +15,11 @@ and every session is saved to a local portfolio you can grow over time.
 | Coding / DSA — real editor, executable tests | Product / system design — live diagram canvas |
 | :---: | :---: |
 | ![Coding interview with passing tests](assets/screenshots/coding.png) | ![System design with a rendered diagram](assets/screenshots/system-design.png) |
-| **Data screener — DuckDB SQL console + executable Python** | **Case study — pick a prompt, then timed stakeholder rounds** |
-| ![SQL screener checking a query against the expected result](assets/screenshots/screener-sql.png) | ![Case-study prompt chooser and deliverable](assets/screenshots/case-study.png) |
+| **Data screener — DuckDB SQL console + executable Python** | **Portfolio — your saved interviews, searchable** |
+| ![SQL screener checking a query against the expected result](assets/screenshots/screener-sql.png) | ![Portfolio dashboard](assets/screenshots/portfolio.png) |
 
-Every session is saved to a searchable local portfolio:
-
-![Portfolio dashboard](assets/screenshots/portfolio.png)
+Other interview types include case studies with timed multi-round stakeholder loops, cloud/deploy, and your
+own hybrid drills.
 
 ## Install
 
