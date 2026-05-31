@@ -2,7 +2,7 @@
    Tokens adapted from Empathetech's brand (empathetech.org/src/styles/variables.css): Poppins type,
    the purple/aqua/coral palette, the 3px spacing scale, 9px "semi-rounded" radius, 0.2s transitions.
    Light + dark themes via [data-theme] — EVERY surface flips, including the code editor (light editor in light
-   mode, dark in dark), driven by the --editor-*/--syn-* tokens defined per theme below.
+   mode, dark in dark), driven by the per-theme editor and syntax tokens defined below.
    Contrast targets WCAG AA; focus, reduced-motion, and text-scaling are first-class (this is Empathetech). */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
