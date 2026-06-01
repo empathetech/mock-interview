@@ -9,6 +9,16 @@ truth for the shared shell, and portfolios stamp the version they were deployed 
 `python3 scripts/shell_sync.py upgrade <portfolio>` re-copies the shared shell and never touches interview
 instances or their artifacts. MAJOR releases may require instance migration and will say so here.
 
+## [1.2.1] — 2026-05-31
+
+### Fixed
+- **Portfolio dashboard table no longer overflows its container.** Adding the per-row **Actions** column
+  pushed the 8-column table wider than the page wrap, so it drifted off-center and the rightmost buttons
+  peeked past the edge. The table now uses a fixed layout with explicit per-column widths (summing to 100%),
+  sits in a scroll wrapper, and is exactly as wide as the controls above it — centered, uniform width, with
+  nothing peeking out. Long titles and tags ellipsize within their column instead of forcing the table wider.
+  (Shell-only, graceful upgrade — `python3 scripts/shell_sync.py upgrade <portfolio>`.)
+
 ## [1.2.0] — 2026-05-31
 
 ### Changed

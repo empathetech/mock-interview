@@ -22,13 +22,22 @@
     .pf-controls input[type=text], .pf-controls #pf-search { flex:1; min-width:200px; }
     .pf-ft { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); white-space:nowrap; cursor:pointer; }
     .pf-ft-status { color:var(--warn); font-size:12px; }
-    table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line);
-      border-radius:10px; overflow:hidden; }
-    th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:14px; }
+    /* Scroll wrapper keeps the table exactly as wide as the controls above it (the 980px wrap),
+       centered, so nothing peeks out; it only scrolls on viewports too narrow for the columns. */
+    .pf-tablewrap { width:100%; overflow-x:auto; border-radius:10px; }
+    table { width:100%; table-layout:fixed; border-collapse:collapse; background:var(--panel);
+      border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+    /* Fixed column widths (sum = 100%) so the Actions column can't push the table past its container. */
+    col.c-interview { width:17%; } col.c-company { width:13%; } col.c-role { width:12%; }
+    col.c-level { width:8%; } col.c-date { width:11%; } col.c-status { width:11%; }
+    col.c-result { width:10%; } col.c-actions { width:18%; }
+    th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:14px;
+      vertical-align:middle; overflow:hidden; text-overflow:ellipsis; }
     th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); background:var(--bg); cursor:pointer; }
     tr:last-child td { border-bottom:0; }
     tr:hover td { background:var(--panel-2); }
-    a.pf-open { color:var(--accent); font-weight:600; text-decoration:none; }
+    a.pf-open { color:var(--accent); font-weight:600; text-decoration:none; display:inline-block;
+      max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }
     a.pf-open:hover { text-decoration:underline; }
     .pf-pill { display:inline-block; font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; vertical-align:middle; }
     .pf-pill.completed { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
@@ -54,8 +63,8 @@
     /* per-interview row actions */
     th.pf-actions-h { text-align:right; cursor:default; }
     td.pf-actions { white-space:nowrap; text-align:right; }
-    .pf-act { background:none; border:1px solid var(--line); border-radius:6px; padding:3px 7px;
-      margin-left:4px; cursor:pointer; color:var(--muted); font:inherit; font-size:13px; line-height:1.1; }
+    .pf-act { background:none; border:1px solid var(--line); border-radius:6px; padding:3px 6px;
+      margin-left:3px; cursor:pointer; color:var(--muted); font:inherit; font-size:13px; line-height:1.1; }
     .pf-act:hover { color:var(--ink); border-color:var(--accent); }
     .pf-act.danger:hover { color:var(--danger); border-color:var(--danger); }
     /* lightweight modal + toast */
@@ -105,7 +114,12 @@
         <input type="checkbox" id="pf-ft"> Full-text<span class="pf-ft-status" id="pf-ft-status"></span>
       </label>
     </div>
+    <div class="pf-tablewrap">
     <table>
+      <colgroup>
+        <col class="c-interview"><col class="c-company"><col class="c-role"><col class="c-level">
+        <col class="c-date"><col class="c-status"><col class="c-result"><col class="c-actions">
+      </colgroup>
       <thead><tr>
         <th data-sort="title">Interview</th>
         <th data-sort="company">Company</th><th data-sort="role">Role</th><th data-sort="level">Level</th>
@@ -114,6 +128,7 @@
       </tr></thead>
       <tbody id="pf-rows"></tbody>
     </table>
+    </div>
     <div class="pf-empty" id="pf-empty" hidden>No interviews match.</div>
     <footer id="pf-foot"></footer>
   </div>
