@@ -118,6 +118,28 @@ Endpoints:
   the result to `results_path` so you can read test outcomes directly (a write failure surfaces as
   `results_path_error` rather than being swallowed).
 
+Interview-management endpoints (power the dashboard's per-row actions and the profile editor; every path
+goes through the same `_safe()` sandbox, and the slug is validated as a single safe path segment — never
+`shell`, `.`, `..`, or anything with a slash):
+- `POST /api/reset {slug}` → return one interview to a fresh, unstarted state: wipe `artifacts/`,
+  `transcript.json` → `[]`, delete `feedback.md`, set `status:"not_started"`/`overall:null` in both
+  `interview.json` and `portfolio.json`. The **problem itself is preserved** (prompt, tests, background,
+  config, starter). The dashboard also clears the browser's `localStorage` mirror for that slug.
+- `POST /api/clone {slug, new_slug?, new_title?}` → copy the instance to a new folder (default
+  `<base>-attempt-N`, the original being attempt 1), reset the copy's state so it's a clean attempt, set
+  its `slug`/`title`, and add a `portfolio.json` entry inheriting type/company/role/level. Original untouched.
+- `POST /api/delete {slug}` → `rmtree` the instance folder and drop its `portfolio.json` entry.
+- `POST /api/meta {slug, patch}` → edit interview metadata (`title, type, company, role, level, date,
+  status, overall`) in `interview.json` and mirror it to `portfolio.json`. `slug` is **not** editable here
+  (renaming = clone + delete); `status` is validated against the four known values; `type` can't be empty.
+- `POST /api/profile {patch}` → edit the candidate profile (`name, github, linkedin`) in `portfolio.json`.
+
+On status: the persisted statuses are `not_started` / `in_progress` / `completed`. **`ended` is derived,
+not stored** — the shell sets `_session.json.ended:true` when the candidate clicks End & Retro, and the
+dashboard surfaces that as "ended (awaiting retro)" until you write `feedback.md` and flip `interview.json`
+to `completed`. So *ended* = stopped, no feedback yet; *completed* = retro written. The edit dropdown offers
+it for manual recovery but labels it as normally-automatic.
+
 It is a `ThreadingHTTPServer` with a 30s socket read timeout, a 16 MB request cap, and 256 KB output
 truncation — so one stalled client or runaway `print()` can't wedge or OOM the session. `/api/run` runs
 real code as the current user (that's the point); the sandbox guards file *paths*, not the code, which is
@@ -220,7 +242,7 @@ config — never hard-code a specific problem into a module.
 ```json
 {
   "candidate": { "name": "Ada Lovelace", "target_roles": ["Backend SWE"], "target_levels": ["E5"],
-                 "github": "alovelace" },
+                 "github": "alovelace", "linkedin": "ada-lovelace" },   // github/linkedin editable from the dashboard
   "shell_version": "1.0.0",
   "interviews": [
     { "slug": "two-sum-meta-e5", "type": "coding", "company": "Meta", "level": "E5",
@@ -252,3 +274,13 @@ Every interview:
 3. Start the server (if not running) and give the candidate the exact URL:
    `http://localhost:<port>/<slug>/interview.html`.
 4. Write `INTERVIEWER_CONTEXT.md` so you can resume as the right persona later.
+
+## Managing interviews from the dashboard
+
+`index.html` isn't read-only. Each row carries actions — **✎ edit** (title, role/position, type, company,
+level, date, status, result), **↺ reset** (back to a fresh attempt, keeping the problem), **⧉ clone** (a new
+tracked attempt), **🗑 delete** — and the header has **✎ Profile** to edit the candidate's name and
+GitHub/LinkedIn links. Filters include both **Type** and **Role**. All of these call the management endpoints
+above, so they need the server running; they keep `interview.json` and `portfolio.json` in sync and clear the
+browser mirror on reset/delete. This means a candidate can run several attempts at the same problem (clone),
+wipe a botched run (reset), fix mislabeled metadata, or prune old interviews — without you hand-editing JSON.

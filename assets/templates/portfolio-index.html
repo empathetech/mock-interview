@@ -36,6 +36,34 @@
     .pf-pill.ended { color:var(--warn); border-color:var(--warn); background:var(--accent-soft); }
     .pf-empty { color:var(--muted); padding:24px; text-align:center; }
     footer { margin-top:22px; font-size:12px; color:var(--muted); }
+    /* candidate profile links + edit */
+    .pf-links { display:inline-flex; gap:10px; font-size:13px; }
+    .pf-links a { color:var(--accent); text-decoration:none; }
+    .pf-links a:hover { text-decoration:underline; }
+    /* per-interview row actions */
+    th.pf-actions-h { text-align:right; cursor:default; }
+    td.pf-actions { white-space:nowrap; text-align:right; }
+    .pf-act { background:none; border:1px solid var(--line); border-radius:6px; padding:3px 7px;
+      margin-left:4px; cursor:pointer; color:var(--muted); font:inherit; font-size:13px; line-height:1.1; }
+    .pf-act:hover { color:var(--ink); border-color:var(--accent); }
+    .pf-act.danger:hover { color:var(--danger); border-color:var(--danger); }
+    /* lightweight modal + toast */
+    .pf-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center;
+      justify-content:center; z-index:50; padding:16px; }
+    .pf-modal { background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:12px;
+      padding:20px 22px; width:min(460px,94vw); max-height:90vh; overflow:auto; box-shadow:0 14px 44px rgba(0,0,0,.34); }
+    .pf-modal h2 { margin:0 0 14px; font-size:17px; font-weight:600; }
+    .pf-field { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+    .pf-field label { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    .pf-field input, .pf-field select { font:inherit; font-size:14px; padding:7px 9px;
+      border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+    .pf-field option { background:var(--panel); color:var(--ink); }
+    .pf-note { font-size:12px; color:var(--muted); margin:-6px 0 12px; }
+    .pf-note.warn { color:var(--warn); }
+    .pf-modal-foot { display:flex; justify-content:flex-end; gap:10px; margin-top:6px; }
+    .pf-toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--panel);
+      color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:10px 16px; font-size:14px;
+      box-shadow:0 8px 26px rgba(0,0,0,.28); z-index:60; }
   </style>
 </head>
 <body>
@@ -45,13 +73,16 @@
       <div class="pf-head">
         <h1>Interview Portfolio</h1>
         <span class="pf-who" id="pf-who"></span>
+        <span class="pf-links" id="pf-links"></span>
+        <button class="pf-act" id="pf-editprofile" title="Edit your profile" hidden>✎ Profile</button>
       </div>
       <span class="mi-spacer"></span>
       <button class="mi-iconbtn" data-theme-toggle aria-label="Toggle theme">☾</button>
     </div>
     <div class="pf-controls">
-      <input id="pf-search" placeholder="Search title, company, type… (toggle Full-text to search inside prompts & feedback)">
+      <input id="pf-search" placeholder="Search title, company, role, type… (toggle Full-text to search inside prompts & feedback)">
       <select id="pf-type"><option value="">All types</option></select>
+      <select id="pf-role"><option value="">All roles</option></select>
       <select id="pf-status">
         <option value="">Any status</option>
         <option value="not_started">Not started</option>
@@ -66,8 +97,9 @@
     <table>
       <thead><tr>
         <th data-sort="title">Interview</th><th data-sort="type">Type</th>
-        <th data-sort="company">Company</th><th data-sort="level">Level</th>
+        <th data-sort="role">Role</th><th data-sort="company">Company</th><th data-sort="level">Level</th>
         <th data-sort="date">Date</th><th data-sort="status">Status</th><th data-sort="overall">Result</th>
+        <th class="pf-actions-h">Actions</th>
       </tr></thead>
       <tbody id="pf-rows"></tbody>
     </table>
@@ -75,15 +107,13 @@
     <footer id="pf-foot"></footer>
   </div>
   <script>
-    let DATA = [], sortKey = "date", sortDir = -1, ftEnabled = false, indexed = false;
-    const esc = s => (s ?? "").toString().replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    let DATA = [], CANDIDATE = {}, sortKey = "date", sortDir = -1, ftEnabled = false, indexed = false;
+    const esc = s => (s ?? "").toString().replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     fetch("portfolio.json").then(r => r.json()).then(pf => {
       DATA = pf.interviews || [];
-      document.getElementById("pf-who").textContent =
-        pf.candidate ? `${pf.candidate.name || ""} · ${(pf.candidate.target_levels || []).join("/")} · ${DATA.length} interviews` : "";
-      const types = [...new Set(DATA.map(d => d.type))];
-      document.getElementById("pf-type").insertAdjacentHTML("beforeend",
-        types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join(""));
+      CANDIDATE = pf.candidate || {};
+      renderProfile();
+      populateFilters();
       const a = pf.attribution || {}, links = a.links || {};
       const parts = [];
       if (a.org) parts.push(`Built with the ${esc(a.org)} Tech Interview methodology`);
@@ -100,18 +130,35 @@
     function render() {
       const q = document.getElementById("pf-search").value.toLowerCase();
       const ty = document.getElementById("pf-type").value, st = document.getElementById("pf-status").value;
+      const ro = document.getElementById("pf-role").value;
       let rows = DATA.filter(d =>
-        (!ty || d.type === ty) && (!st || d.status === st) &&
-        [d.title, d.company, d.type, d.level, ftEnabled ? d._text : ""].some(v => (v || "").toString().toLowerCase().includes(q)));
+        (!ty || d.type === ty) && (!st || d.status === st) && (!ro || d.role === ro) &&
+        [d.title, d.company, d.role, d.type, d.level, ftEnabled ? d._text : ""].some(v => (v || "").toString().toLowerCase().includes(q)));
       rows.sort((a, b) => ((a[sortKey] || "") > (b[sortKey] || "") ? 1 : -1) * sortDir);
       const tb = document.getElementById("pf-rows");
       tb.innerHTML = rows.map(d => `<tr>
         <td><a class="pf-open" href="${esc(d.slug)}/interview.html">${esc(d.title || d.slug)}</a></td>
-        <td>${esc(d.type)}</td><td>${esc(d.company || "—")}</td><td>${esc(d.level || "—")}</td>
+        <td>${esc(d.type)}</td><td>${esc(d.role || "—")}</td><td>${esc(d.company || "—")}</td><td>${esc(d.level || "—")}</td>
         <td>${esc(d.date || "")}</td>
         <td><span class="pf-pill ${esc(d.status)}">${esc((d.status || "").replace("_", " "))}</span></td>
-        <td>${esc(d.overall || "—")}</td></tr>`).join("");
+        <td>${esc(d.overall || "—")}</td>
+        <td class="pf-actions">
+          <button class="pf-act" data-act="edit" data-slug="${esc(d.slug)}" title="Edit metadata" aria-label="Edit ${esc(d.title || d.slug)}">✎</button>
+          <button class="pf-act" data-act="reset" data-slug="${esc(d.slug)}" title="Reset to a fresh, unstarted state" aria-label="Reset ${esc(d.title || d.slug)}">↺</button>
+          <button class="pf-act" data-act="clone" data-slug="${esc(d.slug)}" title="Clone as a new attempt" aria-label="Clone ${esc(d.title || d.slug)}">⧉</button>
+          <button class="pf-act danger" data-act="delete" data-slug="${esc(d.slug)}" title="Delete this interview" aria-label="Delete ${esc(d.title || d.slug)}">🗑</button>
+        </td></tr>`).join("");
       document.getElementById("pf-empty").hidden = rows.length > 0;
+    }
+    // Build the Type and Role filter dropdowns from the data (called on load and after mutations).
+    function populateFilters() {
+      for (const [id, key, allLabel] of [["pf-type", "type", "All types"], ["pf-role", "role", "All roles"]]) {
+        const sel = document.getElementById(id), cur = sel.value;
+        const vals = [...new Set(DATA.map(d => d[key]).filter(Boolean))].sort();
+        sel.innerHTML = `<option value="">${allLabel}</option>` +
+          vals.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+        sel.value = vals.includes(cur) ? cur : "";
+      }
     }
     // Override the portfolio.json snapshot with each interview's live state: interview.json (status/overall,
     // written by the interviewer at the Retro) and artifacts/_session.json (ended / time elapsed in the UI).
@@ -147,7 +194,7 @@
     document.querySelectorAll("[data-sort]").forEach(th => th.onclick = () => {
       const k = th.dataset.sort; sortDir = (sortKey === k) ? -sortDir : 1; sortKey = k; render();
     });
-    ["pf-search", "pf-type", "pf-status"].forEach(id => document.getElementById(id).addEventListener("input", render));
+    ["pf-search", "pf-type", "pf-status", "pf-role"].forEach(id => document.getElementById(id).addEventListener("input", render));
     document.getElementById("pf-ft").addEventListener("change", async e => {
       ftEnabled = e.target.checked;
       if (ftEnabled && !indexed) {                 // fetch prompt/feedback text only on first enable
@@ -157,6 +204,159 @@
         document.getElementById("pf-ft-status").textContent = "";
       }
       render();
+    });
+
+    // ===== candidate profile + per-interview management ============================
+    // All mutations go through the local server (filesystem ops); they no-op gracefully if it's
+    // offline, since editing files on disk requires it.
+    function renderProfile() {
+      const bits = [CANDIDATE.name || "", (CANDIDATE.target_levels || []).join("/"), `${DATA.length} interviews`].filter(Boolean);
+      document.getElementById("pf-who").textContent = bits.join(" · ");
+      const links = [];
+      if (CANDIDATE.github) {
+        const h = String(CANDIDATE.github);
+        const url = /^https?:\/\//.test(h) ? h : `https://github.com/${h}`;
+        links.push(`<a href="${esc(url)}" target="_blank" rel="noopener">GitHub</a>`);
+      }
+      if (CANDIDATE.linkedin) {
+        const l = String(CANDIDATE.linkedin);
+        const url = /^https?:\/\//.test(l) ? l : `https://www.linkedin.com/in/${l}`;
+        links.push(`<a href="${esc(url)}" target="_blank" rel="noopener">LinkedIn</a>`);
+      }
+      document.getElementById("pf-links").innerHTML = links.join("");
+      document.getElementById("pf-editprofile").hidden = false;
+    }
+
+    async function api(path, body) {
+      let r;
+      try { r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); }
+      catch (e) { throw new Error("can't reach the local server — start it with: python3 shell/serve.py"); }
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.error) throw new Error(j.error || ("HTTP " + r.status));
+      return j;
+    }
+    function toast(msg) {
+      const t = document.createElement("div"); t.className = "pf-toast"; t.textContent = msg;
+      document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+    }
+    // A reset/delete also clears the browser's localStorage mirror for that interview, so stale work
+    // (kept under mi:/<slug>/… and mi:phases:/<slug>/) doesn't reappear on the next open.
+    function clearLocalState(slug) {
+      const a = `mi:/${slug}/`, b = `mi:phases:/${slug}/`;
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith(a) || k.startsWith(b))) localStorage.removeItem(k);
+      }
+    }
+    async function reload() {
+      try { const pf = await (await fetch("portfolio.json", { cache: "no-store" })).json();
+        DATA = pf.interviews || []; CANDIDATE = pf.candidate || CANDIDATE; } catch (e) {}
+      renderProfile(); populateFilters(); render(); refreshLiveStatus();
+      if (ftEnabled) { indexed = true; indexContent(); }
+    }
+
+    function modal(inner) {
+      const o = document.createElement("div"); o.className = "pf-overlay";
+      o.innerHTML = `<div class="pf-modal" role="dialog" aria-modal="true">${inner}</div>`;
+      const close = () => { o.remove(); document.removeEventListener("keydown", onKey); };
+      function onKey(e) { if (e.key === "Escape") close(); }
+      o.addEventListener("click", e => { if (e.target === o) close(); });
+      document.addEventListener("keydown", onKey);
+      document.body.appendChild(o);
+      o.close = close;
+      return o;
+    }
+
+    function suggestAttempt(d) {
+      const baseSlug = d.slug.replace(/-attempt-\d+$/, "");
+      const n = DATA.filter(x => x.slug === baseSlug || x.slug.startsWith(baseSlug + "-attempt-")).length + 1;
+      const baseTitle = (d.title || d.slug).replace(/\s*\(attempt \d+\)\s*$/, "");
+      return `${baseTitle} (attempt ${n})`;
+    }
+
+    function openEdit(d) {
+      const opts = [["not_started", "not started"], ["in_progress", "in progress"],
+        ["completed", "completed"], ["ended", "ended (awaiting retro — usually automatic)"]];
+      const o = modal(`
+        <h2>Edit interview</h2>
+        <div class="pf-field"><label>Title</label><input id="m-title" value="${esc(d.title || "")}"></div>
+        <div class="pf-field"><label>Role / position</label><input id="m-role" value="${esc(d.role || "")}" placeholder="e.g. Senior Backend Engineer"></div>
+        <div class="pf-field"><label>Type</label><input id="m-type" value="${esc(d.type || "")}" list="m-types"></div>
+        <p class="pf-note warn">Changing type switches which UI module loads; existing work may not match a different type.</p>
+        <div class="pf-field"><label>Company</label><input id="m-company" value="${esc(d.company || "")}"></div>
+        <div class="pf-field"><label>Level</label><input id="m-level" value="${esc(d.level || "")}"></div>
+        <div class="pf-field"><label>Date</label><input id="m-date" type="date" value="${esc(d.date || "")}"></div>
+        <div class="pf-field"><label>Status</label><select id="m-status">${
+          opts.map(([v, t]) => `<option value="${v}" ${d.status === v ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+        <div class="pf-field"><label>Result</label><input id="m-overall" value="${esc(d.overall || "")}"></div>
+        <datalist id="m-types">${[...new Set(DATA.map(x => x.type).filter(Boolean))].map(t => `<option value="${esc(t)}">`).join("")}</datalist>
+        <div class="pf-modal-foot"><button class="pf-act" id="m-cancel">Cancel</button><button class="mi-btn primary" id="m-save">Save</button></div>`);
+      const v = id => o.querySelector("#" + id).value.trim();
+      o.querySelector("#m-cancel").onclick = o.close;
+      o.querySelector("#m-save").onclick = async () => {
+        if (!v("m-type")) { alert("Type can't be empty."); return; }
+        const patch = { title: v("m-title"), role: v("m-role") || null, type: v("m-type"),
+          company: v("m-company") || null, level: v("m-level") || null, date: v("m-date") || null,
+          status: o.querySelector("#m-status").value, overall: v("m-overall") || null };
+        try { await api("/api/meta", { slug: d.slug, patch }); o.close(); toast("Saved"); reload(); }
+        catch (e) { alert("Save failed: " + e.message); }
+      };
+      o.querySelector("#m-title").focus();
+    }
+
+    function openClone(d) {
+      const o = modal(`
+        <h2>Clone as a new attempt</h2>
+        <p class="pf-note">Creates a fresh copy — same problem, tests and settings — with empty work,
+          transcript and feedback, so you can track another attempt separately. The original is untouched.</p>
+        <div class="pf-field"><label>New title</label><input id="c-title" value="${esc(suggestAttempt(d))}"></div>
+        <div class="pf-modal-foot"><button class="pf-act" id="c-cancel">Cancel</button><button class="mi-btn primary" id="c-go">Clone</button></div>`);
+      o.querySelector("#c-cancel").onclick = o.close;
+      o.querySelector("#c-go").onclick = async () => {
+        try { const j = await api("/api/clone", { slug: d.slug, new_title: o.querySelector("#c-title").value.trim() || undefined });
+          o.close(); toast("Cloned → " + j.slug); reload(); }
+        catch (e) { alert("Clone failed: " + e.message); }
+      };
+      o.querySelector("#c-title").focus();
+    }
+
+    function openProfile() {
+      const o = modal(`
+        <h2>Edit your profile</h2>
+        <div class="pf-field"><label>Name</label><input id="p-name" value="${esc(CANDIDATE.name || "")}"></div>
+        <div class="pf-field"><label>GitHub</label><input id="p-github" value="${esc(CANDIDATE.github || "")}" placeholder="username or full URL"></div>
+        <div class="pf-field"><label>LinkedIn</label><input id="p-linkedin" value="${esc(CANDIDATE.linkedin || "")}" placeholder="vanity name or full URL"></div>
+        <p class="pf-note">GitHub also credits any interviews you contribute back to the community.</p>
+        <div class="pf-modal-foot"><button class="pf-act" id="p-cancel">Cancel</button><button class="mi-btn primary" id="p-save">Save</button></div>`);
+      const v = id => o.querySelector("#" + id).value.trim();
+      o.querySelector("#p-cancel").onclick = o.close;
+      o.querySelector("#p-save").onclick = async () => {
+        const patch = { name: v("p-name"), github: v("p-github") || null, linkedin: v("p-linkedin") || null };
+        try { const j = await api("/api/profile", { patch }); CANDIDATE = j.candidate || CANDIDATE; o.close(); toast("Profile saved"); renderProfile(); }
+        catch (e) { alert("Save failed: " + e.message); }
+      };
+      o.querySelector("#p-name").focus();
+    }
+    document.getElementById("pf-editprofile").onclick = openProfile;
+
+    // One delegated handler for every row's action buttons (rows are re-rendered, so don't bind per-row).
+    document.getElementById("pf-rows").addEventListener("click", async e => {
+      const btn = e.target.closest("[data-act]"); if (!btn) return;
+      const slug = btn.dataset.slug, act = btn.dataset.act;
+      const d = DATA.find(x => x.slug === slug) || { slug };
+      const label = d.title || slug;
+      try {
+        if (act === "edit") return openEdit(d);
+        if (act === "clone") return openClone(d);
+        if (act === "reset") {
+          if (!confirm(`Reset "${label}"?\n\nThis wipes the code, notes, transcript and feedback for this interview and returns it to a fresh, unstarted state. The problem, tests and settings are kept.`)) return;
+          await api("/api/reset", { slug }); clearLocalState(slug); toast("Interview reset"); reload();
+        } else if (act === "delete") {
+          if (!confirm(`Delete "${label}"?\n\nThis permanently removes the entire interview folder and all of its work. This cannot be undone.`)) return;
+          if (!confirm(`Really delete "${label}"? Last chance.`)) return;
+          await api("/api/delete", { slug }); clearLocalState(slug); toast("Interview deleted"); reload();
+        }
+      } catch (err) { alert("Action failed: " + err.message); }
     });
   </script>
 </body>

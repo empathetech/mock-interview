@@ -22,6 +22,8 @@ portfolio root. It is meant for a single local user practicing interviews, not f
 import http.server
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -59,6 +61,101 @@ def _clip(s: str) -> str:
     return s
 
 
+# ---- interview-management helpers ------------------------------------------------
+# These power the portfolio dashboard's per-interview actions (reset / clone / delete / edit)
+# and the candidate-profile editor. Every path is resolved through _safe(), so nothing can
+# touch or remove anything outside the portfolio root.
+PORTFOLIO_JSON = "portfolio.json"
+VALID_STATUSES = {"not_started", "in_progress", "ended", "completed"}
+# Interview metadata the dashboard is allowed to edit. `slug` is intentionally NOT here — it's the
+# folder name; "renaming" an interview is a clone + delete, not an in-place edit.
+EDITABLE_META = ("title", "type", "company", "role", "level", "date", "status", "overall")
+EDITABLE_PROFILE = ("name", "github", "linkedin")
+SLUG_RE = re.compile(r"^[A-Za-z0-9._-]+$")   # one safe path segment, no slashes / traversal
+
+
+def _read_json(path: Path, default):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
+
+
+def _write_json(path: Path, obj):
+    path.write_text(json.dumps(obj, indent=2) + "\n", encoding="utf-8")
+
+
+def _portfolio_path() -> Path:
+    return ROOT / PORTFOLIO_JSON
+
+
+def _instance_dir(slug: str) -> Path:
+    """Resolve an interview instance folder by slug, refusing anything that isn't a real instance."""
+    if not slug or not SLUG_RE.match(slug) or slug in (".", "..", "shell"):
+        raise ValueError(f"invalid interview slug: {slug!r}")
+    d = _safe(slug)
+    if not d.is_dir():
+        raise ValueError(f"no such interview: {slug}")
+    if not (d / "interview.json").is_file():
+        raise ValueError(f"{slug} is not an interview instance (no interview.json)")
+    return d
+
+
+def _portfolio_upsert(slug: str, fields: dict):
+    """Insert or update a single interview's snapshot in portfolio.json, keeping it in sync with
+    the instance's interview.json. Best-effort: if there's no portfolio.json, quietly do nothing."""
+    pf = _read_json(_portfolio_path(), None)
+    if not isinstance(pf, dict):
+        return
+    items = pf.setdefault("interviews", [])
+    for it in items:
+        if it.get("slug") == slug:
+            it.update(fields)
+            break
+    else:
+        items.insert(0, {"slug": slug, **fields})
+    _write_json(_portfolio_path(), pf)
+
+
+def _portfolio_remove(slug: str):
+    pf = _read_json(_portfolio_path(), None)
+    if not isinstance(pf, dict):
+        return
+    pf["interviews"] = [it for it in pf.get("interviews", []) if it.get("slug") != slug]
+    _write_json(_portfolio_path(), pf)
+
+
+def _reset_instance(d: Path) -> dict:
+    """Return an instance to a fresh, unstarted state, preserving the problem definition (prompt,
+    tests, background, config, starter code). Wipes the candidate's work and the conversation:
+    the artifacts/ dir, transcript.json, feedback.md, and the status/overall fields."""
+    art = d / "artifacts"
+    if art.exists():
+        shutil.rmtree(art)
+    art.mkdir(parents=True, exist_ok=True)
+    (d / "transcript.json").write_text("[]\n", encoding="utf-8")
+    fb = d / "feedback.md"
+    if fb.exists():
+        fb.unlink()
+    iv_path = d / "interview.json"
+    iv = _read_json(iv_path, None)
+    if isinstance(iv, dict):
+        iv["status"] = "not_started"
+        iv["overall"] = None
+        _write_json(iv_path, iv)
+        return iv
+    return {}
+
+
+def _next_attempt_slug(slug: str) -> str:
+    """Pick the next free `<base>-attempt-N` slug (the original counts as attempt 1)."""
+    base = re.sub(r"-attempt-\d+$", "", slug)
+    n = 2
+    while (ROOT / f"{base}-attempt-{n}").exists():
+        n += 1
+    return f"{base}-attempt-{n}"
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     timeout = SOCKET_TIMEOUT_SECONDS   # StreamRequestHandler applies this as the socket read timeout
 
@@ -90,10 +187,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            if self.path == "/api/save":
-                self._save()
-            elif self.path == "/api/run":
-                self._run()
+            routes = {
+                "/api/save": self._save,
+                "/api/run": self._run,
+                "/api/reset": self._reset,
+                "/api/clone": self._clone,
+                "/api/delete": self._delete,
+                "/api/meta": self._meta,
+                "/api/profile": self._profile,
+            }
+            handler = routes.get(self.path)
+            if handler:
+                handler()
             else:
                 self._json(404, {"error": "unknown endpoint"})
         except Exception as e:  # surface the error to the UI instead of 500-ing silently
@@ -105,6 +210,92 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(data.get("content", ""), encoding="utf-8")
         self._json(200, {"ok": True, "path": str(target.relative_to(ROOT)), "bytes": target.stat().st_size})
+
+    # ---- interview management (dashboard actions) -------------------------------
+    def _reset(self):
+        """Body: {slug}. Wipe one interview's work + conversation; keep the problem itself."""
+        slug = (self._read_body() or {}).get("slug", "")
+        d = _instance_dir(slug)
+        _reset_instance(d)
+        _portfolio_upsert(slug, {"status": "not_started", "overall": None})
+        self._json(200, {"ok": True, "slug": slug, "status": "not_started"})
+
+    def _clone(self):
+        """Body: {slug, new_slug?, new_title?}. Duplicate an interview as a FRESH attempt: same
+        problem/tests/settings, empty work/transcript/feedback. The original is untouched."""
+        data = self._read_body() or {}
+        slug = data.get("slug", "")
+        src = _instance_dir(slug)
+        new_slug = (data.get("new_slug") or _next_attempt_slug(slug)).strip()
+        if not SLUG_RE.match(new_slug) or new_slug in (".", "..", "shell"):
+            raise ValueError(f"invalid target slug: {new_slug!r}")
+        dst = _safe(new_slug)
+        if dst.exists():
+            raise ValueError(f"an interview named {new_slug!r} already exists")
+        shutil.copytree(src, dst)
+        _reset_instance(dst)
+        iv = _read_json(dst / "interview.json", {}) or {}
+        iv["slug"] = new_slug
+        if data.get("new_title"):
+            iv["title"] = data["new_title"]
+        _write_json(dst / "interview.json", iv)
+        # Base the new portfolio snapshot on the source's so type/company/role/level carry over.
+        pf = _read_json(_portfolio_path(), {}) or {}
+        entry = next((dict(it) for it in pf.get("interviews", []) if it.get("slug") == slug), {})
+        entry.update({"slug": new_slug, "status": "not_started", "overall": None})
+        if iv.get("title"):
+            entry["title"] = iv["title"]
+        _portfolio_upsert(new_slug, entry)
+        self._json(200, {"ok": True, "slug": new_slug, "title": iv.get("title")})
+
+    def _delete(self):
+        """Body: {slug}. Permanently remove an interview folder and its portfolio entry."""
+        slug = (self._read_body() or {}).get("slug", "")
+        d = _instance_dir(slug)
+        shutil.rmtree(d)
+        _portfolio_remove(slug)
+        self._json(200, {"ok": True, "slug": slug})
+
+    def _meta(self):
+        """Body: {slug, patch}. Edit interview metadata in interview.json and mirror it to
+        portfolio.json. Only EDITABLE_META keys are honored; slug is not editable here."""
+        data = self._read_body() or {}
+        slug = data.get("slug", "")
+        patch = data.get("patch") or {}
+        if not isinstance(patch, dict):
+            raise ValueError("patch must be an object")
+        d = _instance_dir(slug)
+        iv_path = d / "interview.json"
+        iv = _read_json(iv_path, None)
+        if not isinstance(iv, dict):
+            raise ValueError("interview.json is missing or invalid")
+        clean = {}
+        for k in EDITABLE_META:
+            if k in patch:
+                v = patch[k]
+                if k == "status" and v not in VALID_STATUSES:
+                    raise ValueError(f"invalid status: {v!r}")
+                if k == "type" and (not isinstance(v, str) or not v.strip()):
+                    raise ValueError("type cannot be empty")
+                clean[k] = v
+        iv.update(clean)
+        _write_json(iv_path, iv)
+        _portfolio_upsert(slug, clean)
+        self._json(200, {"ok": True, "slug": slug, "patch": clean})
+
+    def _profile(self):
+        """Body: {patch}. Edit the candidate profile (name + GitHub/LinkedIn) in portfolio.json."""
+        patch = (self._read_body() or {}).get("patch") or {}
+        if not isinstance(patch, dict):
+            raise ValueError("patch must be an object")
+        pf = _read_json(_portfolio_path(), None)
+        if not isinstance(pf, dict):
+            raise ValueError("portfolio.json is missing or invalid")
+        cand = pf.setdefault("candidate", {})
+        clean = {k: patch[k] for k in EDITABLE_PROFILE if k in patch}
+        cand.update(clean)
+        _write_json(_portfolio_path(), pf)
+        self._json(200, {"ok": True, "candidate": cand})
 
     def _run(self):
         """Run code. Body: {language, code | file, stdin?, args?}.
