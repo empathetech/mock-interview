@@ -9,6 +9,24 @@ truth for the shared shell, and portfolios stamp the version they were deployed 
 `python3 scripts/shell_sync.py upgrade <portfolio>` re-copies the shared shell and never touches interview
 instances or their artifacts. MAJOR releases may require instance migration and will say so here.
 
+## [1.2.2] — 2026-05-31
+
+### Changed
+- **Result is folded into Status; row actions collapse to a `⋯` menu.** The dashboard dropped the separate
+  **Result** column — a *completed* interview now shows its outcome directly in the **Status** cell as a
+  **pass / borderline / fail** pill (or plain "completed" when no result was recorded), with the full
+  qualitative sentence on hover. The four inline action icons (edit / clone / reset / delete) are replaced by
+  a single **`⋯` more-menu** that opens a dropdown, so the Actions column is slim and the row reads cleanly.
+- **Outcome pills are now high-contrast.** pass / borderline / fail (and completed) render as **solid filled**
+  pills instead of faint tinted text, meeting contrast in both light and dark themes via new paired
+  `--success-ink` / `--warn-ink` / `--danger-ink` tokens. Status no longer relies on color alone — the label
+  is always spelled out.
+
+### Fixed
+- **Pills and titles never overflow their cell.** Every pill is width-capped with ellipsis and carries a
+  `title` tooltip with the full text; the interview title link is likewise tooltipped. Combined with the
+  fixed table layout, nothing peeks past the table edge at any column width.
+
 ## [1.2.1] — 2026-05-31
 
 ### Fixed

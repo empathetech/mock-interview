@@ -27,10 +27,11 @@
     .pf-tablewrap { width:100%; overflow-x:auto; border-radius:10px; }
     table { width:100%; table-layout:fixed; border-collapse:collapse; background:var(--panel);
       border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-    /* Fixed column widths (sum = 100%) so the Actions column can't push the table past its container. */
-    col.c-interview { width:17%; } col.c-company { width:13%; } col.c-role { width:12%; }
-    col.c-level { width:8%; } col.c-date { width:11%; } col.c-status { width:11%; }
-    col.c-result { width:10%; } col.c-actions { width:18%; }
+    /* Fixed column widths (sum = 100%) so no column can push the table past its container.
+       Result is folded into Status, and Actions collapses to a single ⋯ menu, so both are slim. */
+    col.c-interview { width:22%; } col.c-company { width:15%; } col.c-role { width:13%; }
+    col.c-level { width:10%; } col.c-date { width:12%; } col.c-status { width:18%; }
+    col.c-actions { width:10%; }
     th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:14px;
       vertical-align:middle; overflow:hidden; text-overflow:ellipsis; }
     th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); background:var(--bg); cursor:pointer; }
@@ -39,15 +40,19 @@
     a.pf-open { color:var(--accent); font-weight:600; text-decoration:none; display:inline-block;
       max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }
     a.pf-open:hover { text-decoration:underline; }
-    .pf-pill { display:inline-block; font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; vertical-align:middle; }
-    .pf-pill.completed { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
+    .pf-pill { display:inline-block; max-width:100%; font-size:11px; padding:2px 9px; border-radius:999px;
+      border:1px solid var(--line); color:var(--muted); white-space:nowrap; vertical-align:middle;
+      overflow:hidden; text-overflow:ellipsis; }
+    /* In-progress states: outline pills. */
     .pf-pill.in_progress { color:var(--warn); border-color:var(--warn); }
     .pf-pill.ended { color:var(--warn); border-color:var(--warn); background:var(--accent-soft); }
     .pf-pill.not_started { color:var(--muted); }
-    /* Result outcome pills (derived from the qualitative `overall`; full text on hover) */
-    .pf-pill.pass { color:var(--success); border-color:var(--success); background:var(--success-bg); }
-    .pf-pill.fail { color:var(--danger); border-color:var(--danger); }
-    .pf-pill.borderline { color:var(--warn); border-color:var(--warn); }
+    /* Terminal states: SOLID, high-contrast pills (Result is folded into Status here — a completed
+       interview shows pass / borderline / fail, or plain "completed" when no result was recorded). */
+    .pf-pill.completed { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); font-weight:600; }
+    .pf-pill.pass { color:var(--success-ink); background:var(--success); border-color:var(--success); font-weight:600; }
+    .pf-pill.fail { color:var(--danger-ink); background:var(--danger); border-color:var(--danger); font-weight:600; }
+    .pf-pill.borderline { color:var(--warn-ink); background:var(--warn); border-color:var(--warn); font-weight:600; }
     .pf-pill.none { color:var(--muted); border-style:dashed; }
     /* Neutral metadata tags: company / role / level / date — scannable, not free-form */
     .pf-tag { display:inline-block; font-size:12px; padding:2px 9px; border-radius:999px; background:var(--bg);
@@ -60,13 +65,26 @@
     .pf-links { display:inline-flex; gap:10px; font-size:13px; }
     .pf-links a { color:var(--accent); text-decoration:none; }
     .pf-links a:hover { text-decoration:underline; }
-    /* per-interview row actions */
+    /* per-interview row actions — a single ⋯ trigger that opens a dropdown menu */
     th.pf-actions-h { text-align:right; cursor:default; }
     td.pf-actions { white-space:nowrap; text-align:right; }
     .pf-act { background:none; border:1px solid var(--line); border-radius:6px; padding:3px 6px;
-      margin-left:3px; cursor:pointer; color:var(--muted); font:inherit; font-size:13px; line-height:1.1; }
+      cursor:pointer; color:var(--muted); font:inherit; font-size:13px; line-height:1.1; }
     .pf-act:hover { color:var(--ink); border-color:var(--accent); }
     .pf-act.danger:hover { color:var(--danger); border-color:var(--danger); }
+    .pf-more { font-size:17px; line-height:1; padding:1px 9px; letter-spacing:1px; }
+    .pf-more[aria-expanded="true"] { color:var(--ink); border-color:var(--accent); background:var(--accent-soft); }
+    /* Row-action dropdown (positioned in JS, anchored to the ⋯ button). */
+    .pf-menu { position:fixed; z-index:55; min-width:178px; padding:5px; background:var(--panel);
+      border:1px solid var(--line); border-radius:10px; box-shadow:0 14px 36px rgba(0,0,0,.30); }
+    .pf-menu button { display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+      background:none; border:0; border-radius:7px; padding:8px 10px; font:inherit; font-size:13.5px;
+      color:var(--ink); cursor:pointer; }
+    .pf-menu button:hover, .pf-menu button:focus-visible { background:var(--panel-2); outline:none; }
+    .pf-menu button .pf-mi { width:16px; text-align:center; color:var(--muted); flex:0 0 auto; }
+    .pf-menu button.danger { color:var(--danger); }
+    .pf-menu button.danger .pf-mi { color:var(--danger); }
+    .pf-menu-sep { height:1px; background:var(--line); margin:4px 4px; }
     /* lightweight modal + toast */
     .pf-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center;
       justify-content:center; z-index:50; padding:16px; }
@@ -118,13 +136,13 @@
     <table>
       <colgroup>
         <col class="c-interview"><col class="c-company"><col class="c-role"><col class="c-level">
-        <col class="c-date"><col class="c-status"><col class="c-result"><col class="c-actions">
+        <col class="c-date"><col class="c-status"><col class="c-actions">
       </colgroup>
       <thead><tr>
         <th data-sort="title">Interview</th>
         <th data-sort="company">Company</th><th data-sort="role">Role</th><th data-sort="level">Level</th>
-        <th data-sort="date">Date</th><th data-sort="status">Status</th><th data-sort="overall">Result</th>
-        <th class="pf-actions-h">Actions</th>
+        <th data-sort="date">Date</th><th data-sort="status">Status</th>
+        <th class="pf-actions-h" aria-label="Actions"></th>
       </tr></thead>
       <tbody id="pf-rows"></tbody>
     </table>
@@ -155,15 +173,26 @@
 
     // Neutral metadata tag; "—" when empty. Full value on hover so long roles don't blow out the row.
     const tag = v => v ? `<span class="pf-tag" title="${esc(v)}">${esc(v)}</span>` : `<span class="pf-tag muted">—</span>`;
-    // Result pill — distil the qualitative `overall` to a short outcome; the full sentence is the tooltip.
-    function outcomePill(overall) {
-      if (!overall) return `<span class="pf-pill none" title="No result yet">—</span>`;
-      const s = overall.toLowerCase();
-      let cls = "none", label = "—";
-      if (/\bborderline\b/.test(s)) { cls = "borderline"; label = "borderline"; }
-      else if (/\b(fail|no[ -]?pass|did ?n[o']?t pass|reject)/.test(s)) { cls = "fail"; label = "fail"; }
-      else if (/\bpass\b/.test(s)) { cls = "pass"; label = "pass"; }
-      return `<span class="pf-pill ${cls}" title="${esc(overall)}">${label}</span>`;
+    const pill = (cls, label, title) => `<span class="pf-pill ${esc(cls)}" title="${esc(title || label)}">${esc(label)}</span>`;
+    // Distil the qualitative `overall` to a short outcome class (pass / borderline / fail), or null if unclear.
+    function outcome(overall) {
+      const s = (overall || "").toLowerCase();
+      if (/\bborderline\b/.test(s)) return "borderline";
+      if (/\b(fail|no[ -]?pass|did ?n[o']?t pass|reject)/.test(s)) return "fail";
+      if (/\bpass\b/.test(s)) return "pass";
+      return null;
+    }
+    // Status pill — for a COMPLETED interview the result is folded in (pass / borderline / fail, full
+    // sentence on hover), so there's no separate Result column; other statuses show their own state.
+    function statusPill(d) {
+      const st = d.status || "not_started";
+      if (st === "completed") {
+        const o = outcome(d.overall);
+        if (o) return pill(o, o, d.overall);
+        return pill("completed", "completed", d.overall || "Completed");
+      }
+      const label = st.replace(/_/g, " ");
+      return pill(st, label, label);
     }
 
     function render() {
@@ -176,16 +205,13 @@
       rows.sort((a, b) => ((a[sortKey] || "") > (b[sortKey] || "") ? 1 : -1) * sortDir);
       const tb = document.getElementById("pf-rows");
       tb.innerHTML = rows.map(d => `<tr>
-        <td><a class="pf-open" href="${esc(d.slug)}/interview.html">${esc(d.title || d.slug)}</a></td>
+        <td><a class="pf-open" href="${esc(d.slug)}/interview.html" title="${esc(d.title || d.slug)}">${esc(d.title || d.slug)}</a></td>
         <td>${tag(d.company)}</td><td>${tag(d.role)}</td><td>${tag(d.level)}</td>
         <td>${tag(d.date)}</td>
-        <td><span class="pf-pill ${esc(d.status)}">${esc((d.status || "").replace("_", " "))}</span></td>
-        <td>${outcomePill(d.overall)}</td>
+        <td>${statusPill(d)}</td>
         <td class="pf-actions">
-          <button class="pf-act" data-act="edit" data-slug="${esc(d.slug)}" title="Edit metadata" aria-label="Edit ${esc(d.title || d.slug)}">✎</button>
-          <button class="pf-act" data-act="reset" data-slug="${esc(d.slug)}" title="Reset to a fresh, unstarted state" aria-label="Reset ${esc(d.title || d.slug)}">↺</button>
-          <button class="pf-act" data-act="clone" data-slug="${esc(d.slug)}" title="Clone as a new attempt" aria-label="Clone ${esc(d.title || d.slug)}">⧉</button>
-          <button class="pf-act danger" data-act="delete" data-slug="${esc(d.slug)}" title="Delete this interview" aria-label="Delete ${esc(d.title || d.slug)}">🗑</button>
+          <button class="pf-act pf-more" data-act="menu" data-slug="${esc(d.slug)}" title="More actions"
+            aria-label="Actions for ${esc(d.title || d.slug)}" aria-haspopup="menu" aria-expanded="false">⋯</button>
         </td></tr>`).join("");
       document.getElementById("pf-empty").hidden = rows.length > 0;
     }
@@ -379,12 +405,9 @@
     }
     document.getElementById("pf-editprofile").onclick = openProfile;
 
-    // One delegated handler for every row's action buttons (rows are re-rendered, so don't bind per-row).
-    document.getElementById("pf-rows").addEventListener("click", async e => {
-      const btn = e.target.closest("[data-act]"); if (!btn) return;
-      const slug = btn.dataset.slug, act = btn.dataset.act;
-      const d = DATA.find(x => x.slug === slug) || { slug };
-      const label = d.title || slug;
+    // Run a chosen row action. Shared by the dropdown menu items.
+    async function runRowAction(act, d) {
+      const slug = d.slug, label = d.title || slug;
       try {
         if (act === "edit") return openEdit(d);
         if (act === "clone") return openClone(d);
@@ -397,7 +420,54 @@
           await api("/api/delete", { slug }); clearLocalState(slug); toast("Interview deleted"); reload();
         }
       } catch (err) { alert("Action failed: " + err.message); }
+    }
+
+    // The ⋯ dropdown: one floating menu at a time, positioned next to its anchor button.
+    let CURRENT_MENU = null;
+    function closeRowMenu() {
+      if (!CURRENT_MENU) return;
+      CURRENT_MENU.anchor?.setAttribute("aria-expanded", "false");
+      CURRENT_MENU.el.remove();
+      CURRENT_MENU = null;
+    }
+    function openRowMenu(anchor, d) {
+      closeRowMenu();
+      const el = document.createElement("div");
+      el.className = "pf-menu"; el.setAttribute("role", "menu");
+      el.innerHTML = `
+        <button role="menuitem" data-mact="edit"><span class="pf-mi">✎</span>Edit metadata</button>
+        <button role="menuitem" data-mact="clone"><span class="pf-mi">⧉</span>Clone as new attempt</button>
+        <button role="menuitem" data-mact="reset"><span class="pf-mi">↺</span>Reset to fresh state</button>
+        <div class="pf-menu-sep"></div>
+        <button role="menuitem" class="danger" data-mact="delete"><span class="pf-mi">🗑</span>Delete interview</button>`;
+      el.addEventListener("click", e => {
+        const b = e.target.closest("[data-mact]"); if (!b) return;
+        const act = b.dataset.mact; closeRowMenu(); runRowAction(act, d);
+      });
+      document.body.appendChild(el);
+      // Position: right-align the menu to the button, drop below; flip up / clamp to stay on-screen.
+      const r = anchor.getBoundingClientRect(), mw = el.offsetWidth, mh = el.offsetHeight;
+      let left = Math.min(r.right - mw, innerWidth - mw - 8);
+      let top = (r.bottom + mh + 8 > innerHeight) ? r.top - mh - 4 : r.bottom + 4;
+      el.style.left = Math.max(8, left) + "px";
+      el.style.top = Math.max(8, top) + "px";
+      anchor.setAttribute("aria-expanded", "true");
+      CURRENT_MENU = { el, anchor };
+      el.querySelector("button").focus();
+    }
+    // Delegated trigger for every row's ⋯ button (rows are re-rendered, so don't bind per-row).
+    document.getElementById("pf-rows").addEventListener("click", e => {
+      const btn = e.target.closest('[data-act="menu"]'); if (!btn) return;
+      e.stopPropagation();
+      if (CURRENT_MENU && CURRENT_MENU.anchor === btn) { closeRowMenu(); return; }  // toggle off
+      const d = DATA.find(x => x.slug === btn.dataset.slug) || { slug: btn.dataset.slug };
+      openRowMenu(btn, d);
     });
+    // Dismiss the menu on outside click, Escape, scroll, or resize.
+    document.addEventListener("click", e => { if (CURRENT_MENU && !e.target.closest(".pf-menu")) closeRowMenu(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeRowMenu(); });
+    window.addEventListener("resize", closeRowMenu);
+    window.addEventListener("scroll", closeRowMenu, true);
   </script>
 </body>
 </html>

@@ -29,6 +29,8 @@
   --accent: #642d9b; --accent-hover: #51247e; --accent-ink: #ffffff; --accent-soft: #ede7f7;
   --link: #5a2d8f;
   --success: #1c8576; --success-bg: #2a9d8f; --warn: #8a5a10; --danger: #b9442a;
+  /* ink that sits ON a filled success/warn/danger pill — these light-mode fills are dark, so ink is white */
+  --success-ink: #ffffff; --warn-ink: #ffffff; --danger-ink: #ffffff;
   --focus: #9973d3;
   --shadow: 0 1px 2px rgba(48,38,83,.06), 0 4px 16px rgba(48,38,83,.06);
   /* light editor surfaces + dark-on-light syntax palette */
@@ -45,6 +47,8 @@
   --accent: #b59af0; --accent-hover: #c6b0f7; --accent-ink: #1b1626; --accent-soft: #2a2440;
   --link: #c3a9f5;
   --success: #5cc7b6; --success-bg: #2a9d8f; --warn: #ffc36b; --danger: #f0937c;
+  /* dark-mode fills are light, so the ink that sits ON them is dark */
+  --success-ink: #0c2722; --warn-ink: #2c2100; --danger-ink: #3a1208;
   --focus: #b59af0;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
   /* dark editor surfaces + light-on-dark syntax palette */
@@ -61,6 +65,7 @@
     --ink: #ece9f6; --muted: #a99fc4; --line: #342d49;
     --accent: #b59af0; --accent-hover: #c6b0f7; --accent-ink: #1b1626; --accent-soft: #2a2440;
     --link: #c3a9f5; --success: #5cc7b6; --success-bg: #2a9d8f; --warn: #ffc36b; --danger: #f0937c;
+    --success-ink: #0c2722; --warn-ink: #2c2100; --danger-ink: #3a1208;
     --focus: #b59af0; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
     --editor-bg: #1c1830; --editor-ink: #ece9f6; --editor-gutter: #16121f; --editor-lineno: #6c6390;
     --toolbar-bg: #251f3a; --toolbar-ink: #d9d3ea; --console-bg: #15111f; --console-ink: #cfc9e0;
