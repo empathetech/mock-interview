@@ -1,0 +1,6 @@
+#!/bin/sh
+# Pre-commit guard: a change to any shell file must bump assets/shell/VERSION.
+# Version-controlled (not in .git/hooks) — activate once per clone with:  git config core.hooksPath hooks
+# CI enforces the same rule via .github/workflows/shell-version-check.yml, so this is a fast local mirror.
+root="$(git rev-parse --show-toplevel)"
+exec python3 "$root/scripts/check_version_bump.py"

@@ -69,6 +69,11 @@ The skill's shell version is declared in **`assets/shell/VERSION`** (semver — 
 (`assets/shell/`, `scripts/serve.py`, `assets/templates/portfolio-index.html`) without bumping `VERSION` and
 adding a `CHANGELOG.md` entry** — an unbumped change is exactly the drift this mechanism exists to prevent.
 
+This rule is **enforced, not just documented**: `scripts/check_version_bump.py` fails any commit/PR that
+changes a shell file without bumping `VERSION`. It runs as a pre-commit hook (activate once per clone with
+`git config core.hooksPath hooks`) and, airtight, as the `shell-version-check` CI workflow on every PR/push to
+`main` (CI can't be `--no-verify`'d).
+
 Don't eyeball whether a portfolio is current — run the tool, which compares the stamped version **and** a
 content hash of every shell file (so it catches drift even when someone forgot to bump):
 

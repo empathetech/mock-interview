@@ -9,6 +9,15 @@ truth for the shared shell, and portfolios stamp the version they were deployed 
 `python3 scripts/shell_sync.py upgrade <portfolio>` re-copies the shared shell and never touches interview
 instances or their artifacts. MAJOR releases may require instance migration and will say so here.
 
+## [Unreleased]
+
+### Added
+- **Enforcement that a shell change must bump `VERSION`.** `scripts/check_version_bump.py` fails when any
+  deployed shell file changes without a `VERSION` bump; wired as a version-controlled pre-commit hook
+  (`hooks/pre-commit`, activate with `git config core.hooksPath hooks`) and as the `shell-version-check` GitHub
+  Actions workflow (the un-bypassable layer) on every PR and push to `main`. This closes the loop that let
+  shell features ship un-versioned before 1.1.0. (Tooling/CI only — does not change the deployed shell.)
+
 ## [1.1.0] — 2026-05-31
 
 ### Added

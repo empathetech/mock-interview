@@ -1,0 +1,31 @@
+name: shell-version-check
+
+# Airtight enforcement (a local pre-commit hook can be skipped with --no-verify; this can't be):
+# any change to a shell file must bump assets/shell/VERSION.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history so we can diff against the base
+      - name: Determine diff range
+        id: range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            echo "range=origin/${{ github.base_ref }}...HEAD" >> "$GITHUB_OUTPUT"
+          else
+            before="${{ github.event.before }}"
+            case "$before" in
+              ""|0000000000000000000000000000000000000000) echo "range=HEAD~1...HEAD" >> "$GITHUB_OUTPUT" ;;
+              *) echo "range=$before...${{ github.sha }}" >> "$GITHUB_OUTPUT" ;;
+            esac
+          fi
+      - name: Enforce VERSION bump on shell changes
+        run: python3 scripts/check_version_bump.py "${{ steps.range.outputs.range }}"
