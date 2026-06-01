@@ -30,10 +30,21 @@
     tr:hover td { background:var(--panel-2); }
     a.pf-open { color:var(--accent); font-weight:600; text-decoration:none; }
     a.pf-open:hover { text-decoration:underline; }
-    .pf-pill { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+    .pf-pill { display:inline-block; font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; vertical-align:middle; }
     .pf-pill.completed { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
     .pf-pill.in_progress { color:var(--warn); border-color:var(--warn); }
     .pf-pill.ended { color:var(--warn); border-color:var(--warn); background:var(--accent-soft); }
+    .pf-pill.not_started { color:var(--muted); }
+    /* Result outcome pills (derived from the qualitative `overall`; full text on hover) */
+    .pf-pill.pass { color:var(--success); border-color:var(--success); background:var(--success-bg); }
+    .pf-pill.fail { color:var(--danger); border-color:var(--danger); }
+    .pf-pill.borderline { color:var(--warn); border-color:var(--warn); }
+    .pf-pill.none { color:var(--muted); border-style:dashed; }
+    /* Neutral metadata tags: company / role / level / date — scannable, not free-form */
+    .pf-tag { display:inline-block; font-size:12px; padding:2px 9px; border-radius:999px; background:var(--bg);
+      border:1px solid var(--line); color:var(--ink); white-space:nowrap; max-width:220px; overflow:hidden;
+      text-overflow:ellipsis; vertical-align:middle; }
+    .pf-tag.muted { color:var(--muted); }
     .pf-empty { color:var(--muted); padding:24px; text-align:center; }
     footer { margin-top:22px; font-size:12px; color:var(--muted); }
     /* candidate profile links + edit */
@@ -96,8 +107,8 @@
     </div>
     <table>
       <thead><tr>
-        <th data-sort="title">Interview</th><th data-sort="type">Type</th>
-        <th data-sort="role">Role</th><th data-sort="company">Company</th><th data-sort="level">Level</th>
+        <th data-sort="title">Interview</th>
+        <th data-sort="company">Company</th><th data-sort="role">Role</th><th data-sort="level">Level</th>
         <th data-sort="date">Date</th><th data-sort="status">Status</th><th data-sort="overall">Result</th>
         <th class="pf-actions-h">Actions</th>
       </tr></thead>
@@ -127,6 +138,19 @@
     }).catch(() => { document.getElementById("pf-empty").hidden = false;
       document.getElementById("pf-empty").textContent = "Could not load portfolio.json — start the server (python3 shell/serve.py)."; });
 
+    // Neutral metadata tag; "—" when empty. Full value on hover so long roles don't blow out the row.
+    const tag = v => v ? `<span class="pf-tag" title="${esc(v)}">${esc(v)}</span>` : `<span class="pf-tag muted">—</span>`;
+    // Result pill — distil the qualitative `overall` to a short outcome; the full sentence is the tooltip.
+    function outcomePill(overall) {
+      if (!overall) return `<span class="pf-pill none" title="No result yet">—</span>`;
+      const s = overall.toLowerCase();
+      let cls = "none", label = "—";
+      if (/\bborderline\b/.test(s)) { cls = "borderline"; label = "borderline"; }
+      else if (/\b(fail|no[ -]?pass|did ?n[o']?t pass|reject)/.test(s)) { cls = "fail"; label = "fail"; }
+      else if (/\bpass\b/.test(s)) { cls = "pass"; label = "pass"; }
+      return `<span class="pf-pill ${cls}" title="${esc(overall)}">${label}</span>`;
+    }
+
     function render() {
       const q = document.getElementById("pf-search").value.toLowerCase();
       const ty = document.getElementById("pf-type").value, st = document.getElementById("pf-status").value;
@@ -138,10 +162,10 @@
       const tb = document.getElementById("pf-rows");
       tb.innerHTML = rows.map(d => `<tr>
         <td><a class="pf-open" href="${esc(d.slug)}/interview.html">${esc(d.title || d.slug)}</a></td>
-        <td>${esc(d.type)}</td><td>${esc(d.role || "—")}</td><td>${esc(d.company || "—")}</td><td>${esc(d.level || "—")}</td>
-        <td>${esc(d.date || "")}</td>
+        <td>${tag(d.company)}</td><td>${tag(d.role)}</td><td>${tag(d.level)}</td>
+        <td>${tag(d.date)}</td>
         <td><span class="pf-pill ${esc(d.status)}">${esc((d.status || "").replace("_", " "))}</span></td>
-        <td>${esc(d.overall || "—")}</td>
+        <td>${outcomePill(d.overall)}</td>
         <td class="pf-actions">
           <button class="pf-act" data-act="edit" data-slug="${esc(d.slug)}" title="Edit metadata" aria-label="Edit ${esc(d.title || d.slug)}">✎</button>
           <button class="pf-act" data-act="reset" data-slug="${esc(d.slug)}" title="Reset to a fresh, unstarted state" aria-label="Reset ${esc(d.title || d.slug)}">↺</button>
@@ -210,7 +234,8 @@
     // All mutations go through the local server (filesystem ops); they no-op gracefully if it's
     // offline, since editing files on disk requires it.
     function renderProfile() {
-      const bits = [CANDIDATE.name || "", (CANDIDATE.target_levels || []).join("/"), `${DATA.length} interviews`].filter(Boolean);
+      // Deliberately no candidate-level here — levels live on the interviews, not on the person.
+      const bits = [CANDIDATE.name || "", `${DATA.length} interviews`].filter(Boolean);
       document.getElementById("pf-who").textContent = bits.join(" · ");
       const links = [];
       if (CANDIDATE.github) {

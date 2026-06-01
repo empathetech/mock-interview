@@ -9,6 +9,17 @@ truth for the shared shell, and portfolios stamp the version they were deployed 
 `python3 scripts/shell_sync.py upgrade <portfolio>` re-copies the shared shell and never touches interview
 instances or their artifacts. MAJOR releases may require instance migration and will say so here.
 
+## [1.2.0] — 2026-05-31
+
+### Changed
+- **Portfolio dashboard table is now scannable, not free-form.** Dropped the **Type** column; reordered to
+  Interview · Company · Role · Level · Date · Status · Result. Company/Role/Level/Date render as neutral
+  **tags** (long values ellipsize with the full text on hover), and **Result** is now a color-coded
+  **pass / borderline / fail** pill derived from the qualitative `overall`, with the full sentence on hover —
+  instead of a wrapping paragraph that made rows mushy. (Type is still a filter and remains on each interview.)
+- **Removed the candidate's level from the dashboard header.** Levels belong on interviews, not on the person;
+  the header now reads "Name · N interviews".
+
 ## [Unreleased]
 
 ### Added
