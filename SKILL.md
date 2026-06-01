@@ -166,7 +166,7 @@ A built interview instance looks like:
 
 ```
 <portfolio>/<interview-slug>/
-├── interview.json            # type, company, level, hint level, timebox, methodology, artifact manifest, status
+├── interview.json            # type, company, role_category (enum) + role/level, hint level, timebox, methodology, artifact manifest, status
 ├── INTERVIEWER_CONTEXT.md    # what YOU read to run/resume this interview as the right persona
 ├── interview.html            # entry point — loads the shared shell + this interview's config
 ├── prompt.md                 # the problem statement / scenario, fleshed out enough to work and ask questions about
@@ -177,6 +177,13 @@ A built interview instance looks like:
 ├── iteration_notes.md        # candidate's own notes (UI "Improve" tab) on improving this interview — read on re-run
 └── feedback.md               # the end-of-interview critical retro (written at the end)
 ```
+
+**Classify the role with the canonical `role_category` enum.** Set `role_category` in `interview.json` to one
+of the base-level families — `swe`, `data-eng`, `data-sci`, `ml`, `analytics`, `infra`, `security`, `pm`,
+`em`, `design`, `qa`, `research`, `finance`, `other` — so the dashboard's Role column and filter stay
+consistent across every interview. Keep the *specific* job title in `role` (e.g. "Staff Backend Engineer") and
+the seniority in `level` (e.g. "E7"); the dashboard shows only the family and reveals the title + level on
+hover. (See the schema in `references/ui-architecture.md`.)
 
 **Choose the phase/timer structure to match the format — don't default to Scope→Roadmap→Code→Retro
 everywhere.** The phase pills + budgeted timer are generic; set `phases` in `interview.json` to mirror the

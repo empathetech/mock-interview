@@ -129,8 +129,8 @@ goes through the same `_safe()` sandbox, and the slug is validated as a single s
   `<base>-attempt-N`, the original being attempt 1), reset the copy's state so it's a clean attempt, set
   its `slug`/`title`, and add a `portfolio.json` entry inheriting type/company/role/level. Original untouched.
 - `POST /api/delete {slug}` → `rmtree` the instance folder and drop its `portfolio.json` entry.
-- `POST /api/meta {slug, patch}` → edit interview metadata (`title, type, company, role, level, date,
-  status, overall`) in `interview.json` and mirror it to `portfolio.json`. `slug` is **not** editable here
+- `POST /api/meta {slug, patch}` → edit interview metadata (`title, type, company, role_category, role,
+  level, date, status, overall`) in `interview.json` and mirror it to `portfolio.json`. `slug` is **not** editable here
   (renaming = clone + delete); `status` is validated against the four known values; `type` can't be empty.
 - `POST /api/profile {patch}` → edit the candidate profile (`name, github, linkedin`) in `portfolio.json`.
 
@@ -216,7 +216,12 @@ config — never hard-code a specific problem into a module.
   "title": "Two Sum — warm-up",
   "type": "coding",
   "pathway": "company-specific",        // company-specific | catalog | hybrid
-  "company": "Meta", "role": "Software Engineer", "level": "E5",
+  "company": "Meta",
+  "role_category": "swe",               // CANONICAL enum (the dashboard's Role column). One of:
+                                        //   swe | data-eng | data-sci | ml | analytics | infra |
+                                        //   security | pm | em | design | qa | research | finance | other
+  "role": "Staff Backend Engineer",     // the SPECIFIC job title (free-form) — shown on hover, not in a column
+  "level": "E5",                        // seniority (free-form: E5 / senior / mid) — shown on hover
   "hint_level": "realistic",            // realistic | generous | silent
   "evaluation_focus": null,             // optional, e.g. "tradeoff reasoning & code quality over raw optimality"
   "timebox_minutes": 35,
@@ -245,7 +250,8 @@ config — never hard-code a specific problem into a module.
                  "github": "alovelace", "linkedin": "ada-lovelace" },   // github/linkedin editable from the dashboard
   "shell_version": "1.0.0",
   "interviews": [
-    { "slug": "two-sum-meta-e5", "type": "coding", "company": "Meta", "level": "E5",
+    { "slug": "two-sum-meta-e5", "type": "coding", "company": "Meta",
+      "role_category": "swe", "role": "Staff Backend Engineer", "level": "E5",
       "date": "2026-05-31", "status": "completed", "overall": "borderline" }
   ],
   "attribution": { "org": "Empathetech",

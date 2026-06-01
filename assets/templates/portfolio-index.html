@@ -27,11 +27,11 @@
     .pf-tablewrap { width:100%; overflow-x:auto; border-radius:10px; }
     table { width:100%; table-layout:fixed; border-collapse:collapse; background:var(--panel);
       border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-    /* Fixed column widths (sum = 100%) so no column can push the table past its container.
-       Result is folded into Status, and Actions collapses to a single ⋯ menu, so both are slim. */
-    col.c-interview { width:22%; } col.c-company { width:15%; } col.c-role { width:13%; }
-    col.c-level { width:10%; } col.c-date { width:12%; } col.c-status { width:18%; }
-    col.c-actions { width:10%; }
+    /* Five columns only (sum = 100%). Level + Date + the specific job title collapse into the Role and
+       Status tooltips, Result is folded into Status, and Actions is a single ⋯ menu — so every column is
+       wide enough that its content never truncates awkwardly. */
+    col.c-interview { width:34%; } col.c-company { width:19%; } col.c-role { width:17%; }
+    col.c-status { width:18%; } col.c-actions { width:12%; }
     th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:14px;
       vertical-align:middle; overflow:hidden; text-overflow:ellipsis; }
     th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); background:var(--bg); cursor:pointer; }
@@ -135,13 +135,14 @@
     <div class="pf-tablewrap">
     <table>
       <colgroup>
-        <col class="c-interview"><col class="c-company"><col class="c-role"><col class="c-level">
-        <col class="c-date"><col class="c-status"><col class="c-actions">
+        <col class="c-interview"><col class="c-company"><col class="c-role">
+        <col class="c-status"><col class="c-actions">
       </colgroup>
       <thead><tr>
         <th data-sort="title">Interview</th>
-        <th data-sort="company">Company</th><th data-sort="role">Role</th><th data-sort="level">Level</th>
-        <th data-sort="date">Date</th><th data-sort="status">Status</th>
+        <th data-sort="company">Company</th>
+        <th data-sort="role" title="Role family — hover a row's role for the specific title &amp; level">Role</th>
+        <th data-sort="status" title="Hover a row's status for date, attempt &amp; time taken">Status</th>
         <th class="pf-actions-h" aria-label="Actions"></th>
       </tr></thead>
       <tbody id="pf-rows"></tbody>
@@ -171,9 +172,75 @@
     }).catch(() => { document.getElementById("pf-empty").hidden = false;
       document.getElementById("pf-empty").textContent = "Could not load portfolio.json — start the server (python3 shell/serve.py)."; });
 
-    // Neutral metadata tag; "—" when empty. Full value on hover so long roles don't blow out the row.
-    const tag = v => v ? `<span class="pf-tag" title="${esc(v)}">${esc(v)}</span>` : `<span class="pf-tag muted">—</span>`;
+    // Neutral metadata tag; "—" when empty. Full value on hover so long values don't blow out the row.
+    const tag = (v, title) => v ? `<span class="pf-tag" title="${esc(title || v)}">${esc(v)}</span>` : `<span class="pf-tag muted">—</span>`;
     const pill = (cls, label, title) => `<span class="pf-pill ${esc(cls)}" title="${esc(title || label)}">${esc(label)}</span>`;
+
+    // ===== Canonical role-category enum (the "base level" hard enum) ==========================
+    // The Role column shows the broad FAMILY; the specific job title (e.g. "Staff Backend Engineer")
+    // and level (e.g. "E7") live on the interview as `role` + `level` and surface only on hover.
+    // Stored on each interview as `role_category` (one of these keys); legacy rows are inferred below.
+    const ROLE_CATEGORIES = [
+      { key: "swe",       label: "SWE",       full: "Software Engineering" },
+      { key: "data-eng",  label: "Data Eng",  full: "Data Engineering" },
+      { key: "data-sci",  label: "Data Sci",  full: "Data Science" },
+      { key: "ml",        label: "ML",        full: "Machine Learning" },
+      { key: "analytics", label: "Analytics", full: "Analytics / BI" },
+      { key: "infra",     label: "Infra/SRE", full: "Infrastructure / SRE / DevOps" },
+      { key: "security",  label: "Security",  full: "Security" },
+      { key: "pm",        label: "Product",   full: "Product Management" },
+      { key: "em",        label: "Eng Mgmt",  full: "Engineering Management" },
+      { key: "design",    label: "Design",    full: "Design / UX" },
+      { key: "qa",        label: "QA",        full: "Quality / SDET" },
+      { key: "research",  label: "Research",  full: "Research / Academic" },
+      { key: "finance",   label: "Finance",   full: "Finance / Quant" },
+      { key: "other",     label: "Other",     full: "Other" },
+    ];
+    const CAT_BY_KEY = Object.fromEntries(ROLE_CATEGORIES.map(c => [c.key, c]));
+    // Resolve an interview's category: explicit `role_category` wins; otherwise infer from role/type/title.
+    function catKey(d) {
+      if (d.role_category && CAT_BY_KEY[d.role_category]) return d.role_category;
+      const hay = `${d.role || ""} ${d.type || ""} ${d.title || ""}`.toLowerCase();
+      if (/\bpm\b|product manage|product manager/.test(hay)) return "pm";
+      if (/manager|\bem\b|eng lead|leadership/.test(hay)) return "em";
+      if (/data eng|\bde\b|pipeline|\betl\b|warehouse/.test(hay)) return "data-eng";
+      if (/data scien|\bds\b/.test(hay)) return "data-sci";
+      if (/\bml\b|machine learning|mlops|deep learning/.test(hay)) return "ml";
+      if (/analyst|analytics|\bbi\b|tableau|looker/.test(hay)) return "analytics";
+      if (/\bsre\b|devops|infra|cloud|platform|deploy|kubernetes|terraform/.test(hay)) return "infra";
+      if (/security|appsec|pentest|infosec/.test(hay)) return "security";
+      if (/design|\bux\b|\bui\b(?!ld)/.test(hay)) return "design";
+      if (/\bqa\b|sdet|quality|test eng/.test(hay)) return "qa";
+      if (/research|\bphd\b|grad school|academ/.test(hay)) return "research";
+      if (/finance|quant|trading|actuar/.test(hay)) return "finance";
+      if (/engineer|developer|\bswe\b|coding|frontend|front-end|back ?end|full.?stack|mobile|react|system design|\bsql\b/.test(hay)) return "swe";
+      return "other";
+    }
+    const catLabel = d => (CAT_BY_KEY[catKey(d)] || CAT_BY_KEY.other).label;
+    const catFull  = d => (CAT_BY_KEY[catKey(d)] || CAT_BY_KEY.other).full;
+    // Role cell: the family as a tag; tooltip carries the specific title + level (what used to be columns).
+    function roleCell(d) {
+      const parts = [catFull(d)];
+      if (d.role) parts.push(d.role);
+      if (d.level) parts.push(d.level);
+      return tag(catLabel(d), parts.join(" · "));
+    }
+    // Status tooltip: date + attempt # + time taken — the metadata that used to be its own column.
+    function fmtDur(s) {
+      s = Math.round(s || 0); if (s <= 0) return "";
+      const m = Math.round(s / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
+    }
+    function attemptNum(d) {
+      const m = String(d.slug || "").match(/-attempt-(\d+)$/) || String(d.title || "").match(/\(attempt (\d+)\)/i);
+      return m ? +m[1] : null;
+    }
+    function statusMeta(d) {
+      const bits = [];
+      if (d.date) bits.push(d.date);
+      const a = attemptNum(d); if (a) bits.push("attempt " + a);
+      const dur = fmtDur(d._elapsed); if (dur) bits.push("took " + dur);
+      return bits.join(" · ");
+    }
     // Distil the qualitative `overall` to a short outcome class (pass / borderline / fail), or null if unclear.
     function outcome(overall) {
       const s = (overall || "").toLowerCase();
@@ -182,17 +249,20 @@
       if (/\bpass\b/.test(s)) return "pass";
       return null;
     }
-    // Status pill — for a COMPLETED interview the result is folded in (pass / borderline / fail, full
-    // sentence on hover), so there's no separate Result column; other statuses show their own state.
+    // Status pill — for a COMPLETED interview the result is folded in (pass / borderline / fail), so there's
+    // no separate Result column; other statuses show their own state. The tooltip carries the result sentence
+    // plus date / attempt / time-taken (the old Date column), so the row stays terse but everything's on hover.
     function statusPill(d) {
       const st = d.status || "not_started";
+      const meta = statusMeta(d);
+      const tip = s => [s, meta].filter(Boolean).join("  —  ");
       if (st === "completed") {
         const o = outcome(d.overall);
-        if (o) return pill(o, o, d.overall);
-        return pill("completed", "completed", d.overall || "Completed");
+        if (o) return pill(o, o, tip(d.overall || o));
+        return pill("completed", "completed", tip(d.overall || "Completed"));
       }
       const label = st.replace(/_/g, " ");
-      return pill(st, label, label);
+      return pill(st, label, tip(label));
     }
 
     function render() {
@@ -200,14 +270,14 @@
       const ty = document.getElementById("pf-type").value, st = document.getElementById("pf-status").value;
       const ro = document.getElementById("pf-role").value;
       let rows = DATA.filter(d =>
-        (!ty || d.type === ty) && (!st || d.status === st) && (!ro || d.role === ro) &&
-        [d.title, d.company, d.role, d.type, d.level, ftEnabled ? d._text : ""].some(v => (v || "").toString().toLowerCase().includes(q)));
+        (!ty || d.type === ty) && (!st || d.status === st) && (!ro || catKey(d) === ro) &&
+        [d.title, d.company, d.role, d.type, d.level, catLabel(d), catFull(d), ftEnabled ? d._text : ""].some(v => (v || "").toString().toLowerCase().includes(q)));
       rows.sort((a, b) => ((a[sortKey] || "") > (b[sortKey] || "") ? 1 : -1) * sortDir);
       const tb = document.getElementById("pf-rows");
       tb.innerHTML = rows.map(d => `<tr>
         <td><a class="pf-open" href="${esc(d.slug)}/interview.html" title="${esc(d.title || d.slug)}">${esc(d.title || d.slug)}</a></td>
-        <td>${tag(d.company)}</td><td>${tag(d.role)}</td><td>${tag(d.level)}</td>
-        <td>${tag(d.date)}</td>
+        <td>${tag(d.company)}</td>
+        <td>${roleCell(d)}</td>
         <td>${statusPill(d)}</td>
         <td class="pf-actions">
           <button class="pf-act pf-more" data-act="menu" data-slug="${esc(d.slug)}" title="More actions"
@@ -217,13 +287,19 @@
     }
     // Build the Type and Role filter dropdowns from the data (called on load and after mutations).
     function populateFilters() {
-      for (const [id, key, allLabel] of [["pf-type", "type", "All types"], ["pf-role", "role", "All roles"]]) {
-        const sel = document.getElementById(id), cur = sel.value;
-        const vals = [...new Set(DATA.map(d => d[key]).filter(Boolean))].sort();
-        sel.innerHTML = `<option value="">${allLabel}</option>` +
-          vals.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
-        sel.value = vals.includes(cur) ? cur : "";
-      }
+      // Type: free-form values present in the data.
+      const tSel = document.getElementById("pf-type"), tCur = tSel.value;
+      const tVals = [...new Set(DATA.map(d => d.type).filter(Boolean))].sort();
+      tSel.innerHTML = `<option value="">All types</option>` +
+        tVals.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+      tSel.value = tVals.includes(tCur) ? tCur : "";
+      // Role: the canonical category enum, limited to categories actually present (value = key, label = full).
+      const rSel = document.getElementById("pf-role"), rCur = rSel.value;
+      const present = new Set(DATA.map(catKey));
+      const cats = ROLE_CATEGORIES.filter(c => present.has(c.key));
+      rSel.innerHTML = `<option value="">All roles</option>` +
+        cats.map(c => `<option value="${esc(c.key)}">${esc(c.full)}</option>`).join("");
+      rSel.value = present.has(rCur) ? rCur : "";
     }
     // Override the portfolio.json snapshot with each interview's live state: interview.json (status/overall,
     // written by the interviewer at the Retro) and artifacts/_session.json (ended / time elapsed in the UI).
@@ -232,16 +308,20 @@
         const slug = encodeURIComponent(d.slug);
         try {
           const r = await fetch(`${slug}/interview.json`, { cache: "no-store" });
-          if (r.ok) { const j = await r.json(); if (j.status) d.status = j.status; if (j.overall != null) d.overall = j.overall; }
+          if (r.ok) { const j = await r.json();
+            if (j.status) d.status = j.status;
+            if (j.overall != null) d.overall = j.overall;
+            if (j.role_category) d.role_category = j.role_category;
+            if (j.role) d.role = j.role; if (j.level) d.level = j.level; }
         } catch (e) {}
-        if (d.status !== "completed") {
-          try {
-            const s = await fetch(`${slug}/artifacts/_session.json`, { cache: "no-store" });
-            if (s.ok) { const sj = await s.json();
+        try {   // _session has the elapsed time (for the Status tooltip) and the live ended/in-progress state
+          const s = await fetch(`${slug}/artifacts/_session.json`, { cache: "no-store" });
+          if (s.ok) { const sj = await s.json();
+            if (sj.elapsed_seconds > 0) d._elapsed = sj.elapsed_seconds;
+            if (d.status !== "completed") {
               if (sj.ended) d.status = "ended";
-              else if ((sj.elapsed_seconds || 0) > 0 && d.status === "not_started") d.status = "in_progress"; }
-          } catch (e) {}
-        }
+              else if ((sj.elapsed_seconds || 0) > 0 && d.status === "not_started") d.status = "in_progress"; } }
+        } catch (e) {}
       }));
       render();
     }
@@ -346,11 +426,13 @@
       const o = modal(`
         <h2>Edit interview</h2>
         <div class="pf-field"><label>Title</label><input id="m-title" value="${esc(d.title || "")}"></div>
-        <div class="pf-field"><label>Role / position</label><input id="m-role" value="${esc(d.role || "")}" placeholder="e.g. Senior Backend Engineer"></div>
+        <div class="pf-field"><label>Role family</label><select id="m-role-cat">${
+          ROLE_CATEGORIES.map(c => `<option value="${c.key}" ${catKey(d) === c.key ? "selected" : ""}>${esc(c.full)}</option>`).join("")}</select></div>
+        <div class="pf-field"><label>Specific title</label><input id="m-role" value="${esc(d.role || "")}" placeholder="e.g. Staff Backend Engineer"></div>
+        <div class="pf-field"><label>Level</label><input id="m-level" value="${esc(d.level || "")}" placeholder="e.g. E7 / senior / mid"></div>
         <div class="pf-field"><label>Type</label><input id="m-type" value="${esc(d.type || "")}" list="m-types"></div>
         <p class="pf-note warn">Changing type switches which UI module loads; existing work may not match a different type.</p>
         <div class="pf-field"><label>Company</label><input id="m-company" value="${esc(d.company || "")}"></div>
-        <div class="pf-field"><label>Level</label><input id="m-level" value="${esc(d.level || "")}"></div>
         <div class="pf-field"><label>Date</label><input id="m-date" type="date" value="${esc(d.date || "")}"></div>
         <div class="pf-field"><label>Status</label><select id="m-status">${
           opts.map(([v, t]) => `<option value="${v}" ${d.status === v ? "selected" : ""}>${t}</option>`).join("")}</select></div>
@@ -361,7 +443,8 @@
       o.querySelector("#m-cancel").onclick = o.close;
       o.querySelector("#m-save").onclick = async () => {
         if (!v("m-type")) { alert("Type can't be empty."); return; }
-        const patch = { title: v("m-title"), role: v("m-role") || null, type: v("m-type"),
+        const patch = { title: v("m-title"), role_category: o.querySelector("#m-role-cat").value,
+          role: v("m-role") || null, type: v("m-type"),
           company: v("m-company") || null, level: v("m-level") || null, date: v("m-date") || null,
           status: o.querySelector("#m-status").value, overall: v("m-overall") || null };
         try { await api("/api/meta", { slug: d.slug, patch }); o.close(); toast("Saved"); reload(); }

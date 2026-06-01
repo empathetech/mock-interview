@@ -69,7 +69,7 @@ PORTFOLIO_JSON = "portfolio.json"
 VALID_STATUSES = {"not_started", "in_progress", "ended", "completed"}
 # Interview metadata the dashboard is allowed to edit. `slug` is intentionally NOT here — it's the
 # folder name; "renaming" an interview is a clone + delete, not an in-place edit.
-EDITABLE_META = ("title", "type", "company", "role", "level", "date", "status", "overall")
+EDITABLE_META = ("title", "type", "company", "role_category", "role", "level", "date", "status", "overall")
 EDITABLE_PROFILE = ("name", "github", "linkedin")
 SLUG_RE = re.compile(r"^[A-Za-z0-9._-]+$")   # one safe path segment, no slashes / traversal
 

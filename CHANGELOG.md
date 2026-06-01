@@ -9,6 +9,22 @@ truth for the shared shell, and portfolios stamp the version they were deployed 
 `python3 scripts/shell_sync.py upgrade <portfolio>` re-copies the shared shell and never touches interview
 instances or their artifacts. MAJOR releases may require instance migration and will say so here.
 
+## [1.2.3] — 2026-05-31
+
+### Changed
+- **Dashboard collapses to five columns: Interview · Company · Role · Status · Actions.** Level, Date, and the
+  specific job title are no longer their own columns — every column is now wide enough that nothing truncates
+  awkwardly. The dropped data moves to hover: a row's **Role** reveals the specific title + level, and its
+  **Status** reveals date, attempt #, and time taken. This rebalances the table so Status no longer hogs space
+  while Role gets squeezed.
+- **Role becomes a canonical enum (`role_category`).** Instead of a free-form role string, the Role column
+  shows a hard-enum **family** (`swe`, `data-eng`, `data-sci`, `ml`, `analytics`, `infra`, `security`, `pm`,
+  `em`, `design`, `qa`, `research`, `finance`, `other`), with the specific title (e.g. "Staff Backend
+  Engineer") and level (e.g. "E7") kept in `role` / `level` and surfaced on hover. The Role filter and the Edit
+  modal use the enum; legacy interviews are classified by inference until edited. New field is editable through
+  `/api/meta` and documented in `references/ui-architecture.md`. (Requires a server restart to pick up the new
+  `serve.py` whitelist.)
+
 ## [1.2.2] — 2026-05-31
 
 ### Changed
