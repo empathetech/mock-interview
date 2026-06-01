@@ -9,6 +9,15 @@ truth for the shared shell, and portfolios stamp the version they were deployed 
 `python3 scripts/shell_sync.py upgrade <portfolio>` re-copies the shared shell and never touches interview
 instances or their artifacts. MAJOR releases may require instance migration and will say so here.
 
+## [1.2.4] — 2026-05-31
+
+### Changed
+- **Role and Status now show a rich hover popover instead of the native browser tooltip.** Hovering a row's
+  **Role** opens a styled panel (same surface as the `⋯` menu) with `Category` / `Title` / `Level` rows; the
+  **Status** popover shows `Status` / `Result` / `Date` / `Attempt` / `Time`. Each row is a two-column layout —
+  the label **bold and left-justified**, the value right-justified — so the metadata is legible at a glance
+  rather than crammed into one tooltip line. (Dashboard-only.)
+
 ## [1.2.3] — 2026-05-31
 
 ### Changed

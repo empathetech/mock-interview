@@ -85,6 +85,16 @@
     .pf-menu button.danger { color:var(--danger); }
     .pf-menu button.danger .pf-mi { color:var(--danger); }
     .pf-menu-sep { height:1px; background:var(--line); margin:4px 4px; }
+    /* Rich hover popover for Role / Status — same surface as the menu; key/value rows. */
+    .pf-pop-cell { cursor:default; }
+    .pf-pop { position:fixed; z-index:54; min-width:172px; max-width:300px; padding:6px 4px;
+      background:var(--panel); border:1px solid var(--line); border-radius:10px;
+      box-shadow:0 14px 36px rgba(0,0,0,.30); pointer-events:none; }
+    .pf-pop-row { display:flex; align-items:baseline; justify-content:space-between; gap:20px;
+      padding:5px 9px; font-size:12.5px; }
+    .pf-pop-row + .pf-pop-row { border-top:1px solid var(--line); }
+    .pf-pop-k { font-weight:700; color:var(--muted); text-align:left; white-space:nowrap; flex:0 0 auto; }
+    .pf-pop-v { color:var(--ink); text-align:right; }
     /* lightweight modal + toast */
     .pf-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center;
       justify-content:center; z-index:50; padding:16px; }
@@ -174,7 +184,6 @@
 
     // Neutral metadata tag; "—" when empty. Full value on hover so long values don't blow out the row.
     const tag = (v, title) => v ? `<span class="pf-tag" title="${esc(title || v)}">${esc(v)}</span>` : `<span class="pf-tag muted">—</span>`;
-    const pill = (cls, label, title) => `<span class="pf-pill ${esc(cls)}" title="${esc(title || label)}">${esc(label)}</span>`;
 
     // ===== Canonical role-category enum (the "base level" hard enum) ==========================
     // The Role column shows the broad FAMILY; the specific job title (e.g. "Staff Backend Engineer")
@@ -218,14 +227,8 @@
     }
     const catLabel = d => (CAT_BY_KEY[catKey(d)] || CAT_BY_KEY.other).label;
     const catFull  = d => (CAT_BY_KEY[catKey(d)] || CAT_BY_KEY.other).full;
-    // Role cell: the family as a tag; tooltip carries the specific title + level (what used to be columns).
-    function roleCell(d) {
-      const parts = [catFull(d)];
-      if (d.role) parts.push(d.role);
-      if (d.level) parts.push(d.level);
-      return tag(catLabel(d), parts.join(" · "));
-    }
-    // Status tooltip: date + attempt # + time taken — the metadata that used to be its own column.
+    // Cells carry NO native title — a rich key/value popover (see the hover handlers) supplies the detail.
+    const roleCell = d => `<span class="pf-tag">${esc(catLabel(d))}</span>`;
     function fmtDur(s) {
       s = Math.round(s || 0); if (s <= 0) return "";
       const m = Math.round(s / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
@@ -233,13 +236,6 @@
     function attemptNum(d) {
       const m = String(d.slug || "").match(/-attempt-(\d+)$/) || String(d.title || "").match(/\(attempt (\d+)\)/i);
       return m ? +m[1] : null;
-    }
-    function statusMeta(d) {
-      const bits = [];
-      if (d.date) bits.push(d.date);
-      const a = attemptNum(d); if (a) bits.push("attempt " + a);
-      const dur = fmtDur(d._elapsed); if (dur) bits.push("took " + dur);
-      return bits.join(" · ");
     }
     // Distil the qualitative `overall` to a short outcome class (pass / borderline / fail), or null if unclear.
     function outcome(overall) {
@@ -249,20 +245,30 @@
       if (/\bpass\b/.test(s)) return "pass";
       return null;
     }
-    // Status pill — for a COMPLETED interview the result is folded in (pass / borderline / fail), so there's
-    // no separate Result column; other statuses show their own state. The tooltip carries the result sentence
-    // plus date / attempt / time-taken (the old Date column), so the row stays terse but everything's on hover.
+    // Status pill — a COMPLETED interview folds its result in (pass / borderline / fail); others show state.
     function statusPill(d) {
       const st = d.status || "not_started";
-      const meta = statusMeta(d);
-      const tip = s => [s, meta].filter(Boolean).join("  —  ");
-      if (st === "completed") {
-        const o = outcome(d.overall);
-        if (o) return pill(o, o, tip(d.overall || o));
-        return pill("completed", "completed", tip(d.overall || "Completed"));
-      }
-      const label = st.replace(/_/g, " ");
-      return pill(st, label, tip(label));
+      if (st === "completed") { const o = outcome(d.overall); return pillNT(o || "completed", o || "completed"); }
+      return pillNT(st, st.replace(/_/g, " "));
+    }
+    const pillNT = (cls, label) => `<span class="pf-pill ${esc(cls)}">${esc(label)}</span>`;
+
+    // ===== Rich hover popovers (styled like the ⋯ menu): bold left label, right-aligned value ==========
+    const popRows = pairs => pairs
+      .filter(([, v]) => v != null && v !== "")
+      .map(([k, v]) => `<div class="pf-pop-row"><span class="pf-pop-k">${esc(k)}</span><span class="pf-pop-v">${esc(v)}</span></div>`)
+      .join("");
+    const rolePopHTML = d => popRows([["Category", catFull(d)], ["Title", d.role], ["Level", d.level]]);
+    function statusPopHTML(d) {
+      const st = (d.status || "not_started").replace(/_/g, " ");
+      const o = outcome(d.overall);
+      return popRows([
+        ["Status", st],
+        ["Result", o || (d.status === "completed" ? "completed" : null)],
+        ["Date", d.date],
+        ["Attempt", attemptNum(d)],
+        ["Time", fmtDur(d._elapsed)],
+      ]);
     }
 
     function render() {
@@ -277,8 +283,8 @@
       tb.innerHTML = rows.map(d => `<tr>
         <td><a class="pf-open" href="${esc(d.slug)}/interview.html" title="${esc(d.title || d.slug)}">${esc(d.title || d.slug)}</a></td>
         <td>${tag(d.company)}</td>
-        <td>${roleCell(d)}</td>
-        <td>${statusPill(d)}</td>
+        <td class="pf-pop-cell" data-pop="role" data-slug="${esc(d.slug)}">${roleCell(d)}</td>
+        <td class="pf-pop-cell" data-pop="status" data-slug="${esc(d.slug)}">${statusPill(d)}</td>
         <td class="pf-actions">
           <button class="pf-act pf-more" data-act="menu" data-slug="${esc(d.slug)}" title="More actions"
             aria-label="Actions for ${esc(d.title || d.slug)}" aria-haspopup="menu" aria-expanded="false">⋯</button>
@@ -551,6 +557,37 @@
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeRowMenu(); });
     window.addEventListener("resize", closeRowMenu);
     window.addEventListener("scroll", closeRowMenu, true);
+
+    // ===== Role / Status hover popover ============================================
+    let POP = null;
+    function hidePop() { if (POP) { POP.remove(); POP = null; } }
+    function showPop(cell) {
+      const d = DATA.find(x => x.slug === cell.dataset.slug); if (!d) return;
+      const html = cell.dataset.pop === "role" ? rolePopHTML(d) : statusPopHTML(d);
+      if (!html) return;
+      hidePop();
+      const el = document.createElement("div"); el.className = "pf-pop"; el.innerHTML = html;
+      el._cell = cell; document.body.appendChild(el);
+      const r = cell.getBoundingClientRect(), pw = el.offsetWidth, ph = el.offsetHeight;
+      let left = Math.min(r.left, innerWidth - pw - 8);
+      let top = (r.bottom + ph + 6 > innerHeight) ? r.top - ph - 6 : r.bottom + 6;
+      el.style.left = Math.max(8, left) + "px";
+      el.style.top = Math.max(8, top) + "px";
+      POP = el;
+    }
+    const rowsEl = document.getElementById("pf-rows");
+    rowsEl.addEventListener("mouseover", e => {
+      const cell = e.target.closest(".pf-pop-cell");
+      if (!cell) { if (POP) hidePop(); return; }
+      if (POP && POP._cell === cell) return;
+      showPop(cell);
+    });
+    rowsEl.addEventListener("mouseout", e => {
+      const cell = e.target.closest(".pf-pop-cell");
+      if (cell && !cell.contains(e.relatedTarget)) hidePop();
+    });
+    window.addEventListener("scroll", hidePop, true);
+    window.addEventListener("resize", hidePop);
   </script>
 </body>
 </html>
