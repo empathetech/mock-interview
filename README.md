@@ -48,7 +48,11 @@ That's the whole install. Open Claude Code and say *"mock interview me for a sen
 nothing else to set up.
 
 - **Update:** `git -C ~/.claude/skills/mock-interview pull` (macOS/Linux), or
-  `git -C "$env:USERPROFILE\.claude\skills\mock-interview" pull` (Windows).
+  `git -C "$env:USERPROFILE\.claude\skills\mock-interview" pull` (Windows). After pulling, sync any existing
+  portfolio to the new shell with `python3 ~/.claude/skills/mock-interview/scripts/shell_sync.py upgrade ~/mock-interviews`
+  — it re-copies the shared UI/server and **leaves your interviews and their artifacts untouched** (or just ask
+  the skill: it checks for drift on startup and offers to harmonize). See [CHANGELOG.md](CHANGELOG.md) for
+  what each version changes.
 - **Project-local instead of global?** Clone into `<your-project>/.claude/skills/mock-interview`.
 
 ## Three pathways

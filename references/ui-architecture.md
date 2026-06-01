@@ -260,9 +260,10 @@ First interview for a candidate (one-time):
    to pip/npm-install). Report what's missing and what it gates.
 1. Create the portfolio dir (default `~/mock-interviews/`, or honor cwd if already a portfolio).
 2. Copy this skill's `assets/shell/` (includes `lib/editor.js` and `theme.js`) → `<portfolio>/shell/` and
-   `scripts/serve.py` → `<portfolio>/shell/serve.py`. Record `shell_version` in `portfolio.json`. (On later
-   runs, if that version is behind this skill's, offer to re-copy the shell to upgrade — instances are data,
-   so it's safe; see `references/component-inventory.md`.)
+   `scripts/serve.py` → `<portfolio>/shell/serve.py`. Stamp `shell_version` in `portfolio.json` from
+   `assets/shell/VERSION`. (On later runs, `scripts/preflight.py` / `scripts/shell_sync.py check` detect when a
+   portfolio is behind — by version *and* content hash — and `shell_sync.py upgrade <portfolio>` re-syncs the
+   shell gracefully without touching instances. See `references/component-inventory.md` → "Versioning & upgrades".)
 3. Copy `assets/templates/portfolio-index.html` → `<portfolio>/index.html` (it reads `portfolio.json`, no
    edits needed) and write `portfolio.json` (attribution renders inline in the dashboard footer — no separate
    credits page needed).

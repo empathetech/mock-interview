@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import urllib.request
+from pathlib import Path
 
 CHECKS = []
 
@@ -63,6 +64,27 @@ def main():
         line(True, "internet (CDN libs)", "reachable — rich editor, Mermaid, Excalidraw available")
     except Exception:
         line(None, "internet (CDN libs)", "unreachable — UI still works with plain-textarea fallbacks (offline mode)")
+
+    # Shell-version drift: for any existing portfolio, compare its deployed shell against this skill's.
+    # A version string alone misses drift when nobody bumps it, so shell_sync also compares content hashes.
+    print("-" * 40)
+    try:
+        import shell_sync  # sibling module
+        print(f"  shell version (this skill): {shell_sync.skill_version()}")
+        candidates = [Path(a) for a in sys.argv[1:] if (Path(a) / "portfolio.json").exists()]
+        if not candidates and (Path.home() / "mock-interviews" / "portfolio.json").exists():
+            candidates = [Path.home() / "mock-interviews"]
+        for pf in candidates:
+            changed, missing = shell_sync.diff(pf)
+            stamped = shell_sync.stamped_version(pf)
+            if not changed and not missing and stamped == shell_sync.skill_version():
+                line(True, "portfolio shell", f"{pf} — in sync ({stamped}) ✓")
+            else:
+                n = len(changed) + len(missing)
+                line(False, "portfolio shell", f"{pf} — behind (stamped {stamped}, {n} file(s) drifted)")
+                print(f"      harmonize:  python3 scripts/shell_sync.py upgrade {pf}")
+    except Exception as e:
+        line(None, "portfolio shell", f"drift check skipped ({e})")
 
     print("-" * 40)
     required_ok = CHECKS[0]  # python3

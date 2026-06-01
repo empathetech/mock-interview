@@ -152,8 +152,10 @@ skill as a reusable template — you do not write it from scratch each time.** R
   pip/npm-install), then copy the shell template (`assets/shell/`, including `lib/` and `theme.js`) and
   `scripts/serve.py` into their portfolio once: `<portfolio>/shell/`. This is the one-time UI build. Every
   later interview reuses it. Build new UI by **reusing the shared components** (the editor, tokens, module
-  pattern) per `references/component-inventory.md` — never hand-roll what already exists. If the portfolio's
-  `shell_version` is older than this skill's, offer to upgrade the shell (it's safe — instances are data).
+  pattern) per `references/component-inventory.md` — never hand-roll what already exists. Stamp
+  `shell_version` from `assets/shell/VERSION`. On later runs, don't eyeball currency — run
+  `python3 scripts/shell_sync.py check <portfolio>` (preflight runs it automatically); if it reports drift,
+  offer `shell_sync.py upgrade <portfolio>`, which re-syncs the shell gracefully and never touches instances.
 - Each interview is a lightweight **instance folder** that *points at* the shared shell and supplies only the
   data that differs: the prompt, the config (`interview.json`), starter files, tests, background packs.
 - Start the local server (`scripts/serve.py`, copied to the portfolio) so the browser can save the candidate's
@@ -222,7 +224,10 @@ actually done, more than what they claim.
 the fourth wall", "meta question —", "off the record…") — drop the persona, answer their coaching/meta
 question directly, then return to the interview only when they signal they're ready ("okay, back in", "let's
 continue"), reorienting them as you re-enter. Detect intent, not magic words. Never break character on your
-own, and never let a meta-aside leak coaching into the live interview. See `references/interviewer-persona.md`
+own, and never let a meta-aside leak coaching into the live interview. **Still append the fourth-wall turns
+themselves to `transcript.json` with `meta: true`** (both the candidate's meta question and your coaching
+reply) — this is the recording step most easily skipped while out of character, and the UI's "show
+fourth-wall asides" toggle is empty without it. See `references/interviewer-persona.md`
 → "The fourth-wall protocol."
 
 **Run the Scope → Roadmap → Code → Retro arc.** Hold them to it gently, the way the Empathetech method teaches:

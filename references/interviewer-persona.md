@@ -60,6 +60,12 @@ then you **both explicitly return** to the simulation. Mirror that here:
   things that are clearly *about* the simulation. When truly unsure, ask.
 - Don't volunteer to break character yourself mid-interview, and never let a meta-aside bleed coaching into
   the live interview. The wall goes back up explicitly.
+- **Still log the aside — this is the step that's easiest to skip.** A fourth-wall exchange is *also* a
+  transcript entry: append both the candidate's meta question **and** your coaching reply to `transcript.json`
+  with `meta: true` (same `at`/`phase` as the surrounding turns). Dropping the persona must not mean dropping
+  the recording discipline — the Transcript tab's "show fourth-wall asides" toggle has nothing to reveal
+  unless you logged these. If you only realize afterward that you skipped them, backfill them in order before
+  moving on.
 
 The candidate-facing UI explains this in its help/FAQ overlay (the `?` button), and the fourth-wall asides
 appear as distinctly-styled bubbles in the Transcript tab (toggleable) — so the candidate knows they can

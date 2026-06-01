@@ -64,12 +64,23 @@ contributed back), not stranded in one portfolio. An instance must never contain
 
 ## Versioning & upgrades
 
-`portfolio.json` records `shell_version`; the skill ships a current version. When the skill runs inside an
-existing portfolio whose `shell_version` is older, offer to **upgrade**: re-copy `assets/shell/` →
-`<portfolio>/shell/` (and re-copy `serve.py`, templates). This is safe because instances are *data* and depend
+The skill's shell version is declared in **`assets/shell/VERSION`** (semver — the single source of truth), and
+`portfolio.json` records the `shell_version` a portfolio was deployed from. **Never change a shell file
+(`assets/shell/`, `scripts/serve.py`, `assets/templates/portfolio-index.html`) without bumping `VERSION` and
+adding a `CHANGELOG.md` entry** — an unbumped change is exactly the drift this mechanism exists to prevent.
+
+Don't eyeball whether a portfolio is current — run the tool, which compares the stamped version **and** a
+content hash of every shell file (so it catches drift even when someone forgot to bump):
+
+- `python3 scripts/shell_sync.py check <portfolio>` — report drift (exit 3 if behind, 0 if in sync).
+- `python3 scripts/shell_sync.py upgrade <portfolio>` — re-copy the shell and re-stamp the version.
+- `scripts/preflight.py` runs the check automatically for `~/mock-interviews` (or any portfolio path passed).
+
+Upgrading is **graceful and safe**: it only ever replaces the shared shell. Instances are *data* and depend
 only on the shell's stable contract — the design tokens, the module `mount(el, ctx)` API, and the file
-conventions (`interview.json`, `artifacts/`, `transcript.json`, `feedback.md`). Keep that contract stable;
-when it must change, bump the major version and migrate instances explicitly.
+conventions (`interview.json`, `artifacts/`, `transcript.json`, `feedback.md`) — so they are never touched.
+Keep that contract stable within a major version; PATCH/MINOR upgrade in place, and when the contract must
+break, bump the **major** version and document the instance migration in `CHANGELOG.md`.
 
 ## Dependencies (what must be installed)
 
